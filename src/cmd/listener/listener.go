@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"honeypot/listener"
+	"honeypot/settings"
 	"log"
 	"os"
 	"os/signal"
@@ -24,8 +25,7 @@ func main() {
 		}
 	}()
 
-	str := []string{"8000"}
-	if err := listener.Start(ctx, str); err != nil {
+	if err := listener.Start(ctx, settings.Ports[:]); err != nil {
 		log.Println(err)
 	}
 }

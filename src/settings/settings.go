@@ -1,5 +1,14 @@
 package settings
 
+// Ports to be listent to
+var Ports = [...]string{
+	"5432",
+	"3306",
+	"27017",
+	"7474",
+	"9200",
+}
+
 const (
 	// InfluxDB connection settings
 	InfluxDBAddr      = "localhost"

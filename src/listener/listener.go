@@ -10,8 +10,9 @@ import (
 )
 
 func Start(ctx context.Context, ports []string) error {
-	waitChans := make([]chan bool, len(ports))
-	cancelChans := make([]chan bool, len(ports))
+	lenPorts := len(ports)
+	waitChans := make([]chan bool, lenPorts)
+	cancelChans := make([]chan bool, lenPorts)
 
 	tl := timelines.NewTimelinesWriter()
 	errorsCh := tl.Errors()
@@ -35,7 +36,6 @@ func Start(ctx context.Context, ports []string) error {
 	for _, ch := range waitChans {
 		<-ch
 	}
-
 	return err
 }
 
@@ -64,7 +64,6 @@ func listen(ctx context.Context, wait chan bool, cancel chan bool, tl timelines.
 		case conn := <-acceptChan:
 			registerConnAttemp(tl, conn, port)
 		case <-cancel:
-			log.Println("cancel")
 			return
 		}
 	}
