@@ -3,18 +3,24 @@ package webserver
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"honeypot/settings"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 func index(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Error(w, "Not found", http.StatusNotFound)
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	http.ServeFile(w, r, "cmd/webserver/index.html")
+}
+
+func getConnAttmps(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -27,20 +33,15 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 	connAttemps, err := e.tl.GetConnAttemps(r.Context())
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	for _, i := range connAttemps {
-		fmt.Println(i)
-	}
 
-	// http.ServeFile(w, r, "cmd/webserver/index.html")
 	js, err := json.Marshal(connAttemps)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }
@@ -53,12 +54,20 @@ func injectEnv(e *env, next http.HandlerFunc) http.HandlerFunc {
 }
 
 func ServerMain() error {
+	log.Println("Webserver starting")
+
 	e := newEnv()
 	defer e.destroy()
 
-	log.Println("Webserver starting")
-	http.HandleFunc("/", injectEnv(e, index))
-	err := http.ListenAndServe(settings.WebserverAddr, nil)
+	router := mux.NewRouter()
+	router.HandleFunc("/", index).Methods("GET")
+	router.HandleFunc("/connAttemps", injectEnv(e, getConnAttmps)).Methods("GET")
+
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET"})
+
+	err := http.ListenAndServe(settings.WebserverAddr, handlers.CORS(headersOk, originsOk, methodsOk)(router))
 	if err != nil {
 		return err
 	}
