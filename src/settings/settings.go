@@ -10,10 +10,10 @@ var Ports = [...]string{
 }
 
 const (
-	// Webserver settings
+	// Webserver
 	WebserverAddr = ":8080"
 
-	// InfluxDB connection settings
+	// InfluxDB
 	InfluxDBAddr      = "localhost"
 	InfluxDBPort      = "8086"
 	InfluxDBUsername  = "honey"
@@ -22,6 +22,12 @@ const (
 	InfluxDBPrecision = "ns"
 	InfluxDBOrg       = "honeypot"
 	InfluxDBBucket    = "honeypot"
+
+	// Rabbitmq
+	RabbitmqHost                  = "localhost"
+	RabbitmqPort                  = "5672"
+	RabbitmqTaskProcessConnAttemp = "ProcessConnAttemp"
+	RabbitmqTaskStoreConnAttemp   = "StoreConnAttemp"
 
 	// Page defaults
 	PageDefaultNum  = 0

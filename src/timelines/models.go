@@ -1,6 +1,7 @@
 package timelines
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -47,6 +48,19 @@ func (c *ConnAttemp) toDbPoint() *dbPoint {
 	rep.Fields["ClientPort"] = c.ClientPort
 
 	return rep
+}
+
+func (c *ConnAttemp) Marshal() ([]byte, error) {
+	return json.Marshal(c)
+}
+
+func ConnAttempFromJson(b []byte) (*ConnAttemp, error) {
+	var connAttemp *ConnAttemp
+	err := json.Unmarshal(b, &connAttemp)
+	if err != nil {
+		return nil, err
+	}
+	return connAttemp, nil
 }
 
 func separateIPAndPort(addr string) ([]string, error) {

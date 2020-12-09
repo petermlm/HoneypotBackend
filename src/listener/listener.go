@@ -3,6 +3,8 @@ package listener
 import (
 	"context"
 	"fmt"
+	"honeypot/queue"
+	"honeypot/settings"
 	"honeypot/timelines"
 	"log"
 	"net"
@@ -10,9 +12,16 @@ import (
 )
 
 func Start(ctx context.Context, ports []string) error {
+	var err error
+
 	lenPorts := len(ports)
 	waitChans := make([]chan bool, lenPorts)
 	cancelChans := make([]chan bool, lenPorts)
+
+	publisher, err := queue.NewPublisher(settings.RabbitmqTaskProcessConnAttemp)
+	if err != nil {
+		return err
+	}
 
 	tl := timelines.NewTimelinesWriter()
 	errorsCh := tl.Errors()
@@ -20,10 +29,9 @@ func Start(ctx context.Context, ports []string) error {
 	for i, port := range ports {
 		waitChans[i] = make(chan bool, 1)
 		cancelChans[i] = make(chan bool, 1)
-		go listen(ctx, waitChans[i], cancelChans[i], tl, port)
+		go listen(ctx, waitChans[i], cancelChans[i], tl, publisher, port)
 	}
 
-	var err error
 	select {
 	case e := <-errorsCh:
 		err = e
@@ -39,7 +47,7 @@ func Start(ctx context.Context, ports []string) error {
 	return err
 }
 
-func listen(ctx context.Context, wait chan bool, cancel chan bool, tl timelines.TimelinesWriter, port string) {
+func listen(ctx context.Context, wait chan bool, cancel chan bool, tl timelines.TimelinesWriter, publisher queue.Publisher, port string) {
 	defer func() { wait <- true }()
 
 	listener, err := createListener(port)
@@ -62,7 +70,7 @@ func listen(ctx context.Context, wait chan bool, cancel chan bool, tl timelines.
 		go acceptFunc()
 		select {
 		case conn := <-acceptChan:
-			registerConnAttemp(tl, conn, port)
+			sendToProcessor(publisher, conn, port)
 		case <-cancel:
 			return
 		}
@@ -80,7 +88,7 @@ func createListener(port string) (net.Listener, error) {
 	return l, nil
 }
 
-func registerConnAttemp(tl timelines.TimelinesWriter, conn net.Conn, port string) {
+func sendToProcessor(publisher queue.Publisher, conn net.Conn, port string) {
 	log.Println("Conn", port)
 
 	addr := conn.RemoteAddr().String()
@@ -89,6 +97,6 @@ func registerConnAttemp(tl timelines.TimelinesWriter, conn net.Conn, port string
 		// TODO: Handle it
 	}
 
-	tl.InsertConnAttemp(connAttemp)
+	publisher.Publish(connAttemp)
 	conn.Close()
 }
