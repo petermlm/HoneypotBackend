@@ -9,22 +9,37 @@ import (
 	"time"
 )
 
-func Start(ctx context.Context, ports []string) {
+func Start(ctx context.Context, ports []string) error {
 	waitChans := make([]chan bool, len(ports))
+	cancelChans := make([]chan bool, len(ports))
 
 	tl := timelines.NewTimelinesWriter()
+	errorsCh := tl.Errors()
 
 	for i, port := range ports {
-		waitChans[i] = make(chan bool)
-		go listen(ctx, waitChans[i], tl, port)
+		waitChans[i] = make(chan bool, 1)
+		cancelChans[i] = make(chan bool, 1)
+		go listen(ctx, waitChans[i], cancelChans[i], tl, port)
 	}
 
+	var err error
+	select {
+	case e := <-errorsCh:
+		err = e
+	case <-ctx.Done():
+	}
+
+	for _, ch := range cancelChans {
+		ch <- true
+	}
 	for _, ch := range waitChans {
 		<-ch
 	}
+
+	return err
 }
 
-func listen(ctx context.Context, wait chan bool, tl timelines.TimelinesWriter, port string) {
+func listen(ctx context.Context, wait chan bool, cancel chan bool, tl timelines.TimelinesWriter, port string) {
 	defer func() { wait <- true }()
 
 	listener, err := createListener(port)
@@ -48,7 +63,8 @@ func listen(ctx context.Context, wait chan bool, tl timelines.TimelinesWriter, p
 		select {
 		case conn := <-acceptChan:
 			registerConnAttemp(tl, conn, port)
-		case <-ctx.Done():
+		case <-cancel:
+			log.Println("cancel")
 			return
 		}
 	}

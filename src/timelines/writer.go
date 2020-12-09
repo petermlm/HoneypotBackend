@@ -11,6 +11,7 @@ import (
 type TimelinesWriter interface {
 	Close()
 	InsertConnAttemp(connAttemp *ConnAttemp)
+	Errors() <-chan error
 }
 
 type timelinesWriter struct {
@@ -39,6 +40,10 @@ func (t *timelinesWriter) Close() {
 func (t *timelinesWriter) InsertConnAttemp(connAttemp *ConnAttemp) {
 	point := connAttemp.toDbPoint()
 	t.insertCommonPoint("conn", point)
+}
+
+func (t *timelinesWriter) Errors() <-chan error {
+	return t.writeAPI.Errors()
 }
 
 func (t *timelinesWriter) insertCommonPoint(measure string, dbp *dbPoint) {
