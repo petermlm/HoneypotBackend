@@ -10,6 +10,9 @@ var Ports = [...]string{
 }
 
 const (
+	// Webserver settings
+	WebserverAddr = ":8080"
+
 	// InfluxDB connection settings
 	InfluxDBAddr      = "localhost"
 	InfluxDBPort      = "8086"
@@ -19,4 +22,8 @@ const (
 	InfluxDBPrecision = "ns"
 	InfluxDBOrg       = "honeypot"
 	InfluxDBBucket    = "honeypot"
+
+	// Page defaults
+	PageDefaultNum  = 0
+	PageDefaultSize = 10
 )

@@ -10,7 +10,7 @@ import (
 
 type TimelinesWriter interface {
 	Close()
-	InsertConnAttemp(connAttemp *ConnAttemp)
+	InsertConnAttemp(*ConnAttemp)
 	Errors() <-chan error
 }
 
