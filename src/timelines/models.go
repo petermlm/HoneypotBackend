@@ -7,9 +7,25 @@ import (
 )
 
 type ConnAttemp struct {
-	Time time.Time
-	Port string
-	Addr string
+	Time       time.Time
+	Port       string
+	IP         string
+	ClientPort string
+}
+
+func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
+	ipAndPort, err := separateIPAndPort(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	connAttem := &ConnAttemp{
+		Time:       tm,
+		Port:       port,
+		IP:         ipAndPort[0],
+		ClientPort: ipAndPort[1],
+	}
+	return connAttem, nil
 }
 
 type dbPoint struct {
@@ -21,19 +37,14 @@ type dbPoint struct {
 func (c *ConnAttemp) toDbPoint() *dbPoint {
 	rep := new(dbPoint)
 
-	ipAndPort, err := separateIPAndPort(c.Addr)
-	if err != nil {
-		// TODO: Handle
-	}
-
 	rep.Timestamp = c.Time
 
 	rep.Tags = make(map[string]string)
 	rep.Tags["Port"] = c.Port
-	rep.Tags["Addr"] = ipAndPort[0]
+	rep.Tags["IP"] = c.IP
 
 	rep.Fields = make(map[string]interface{})
-	rep.Fields["ClientPort"] = ipAndPort[1]
+	rep.Fields["ClientPort"] = c.ClientPort
 
 	return rep
 }

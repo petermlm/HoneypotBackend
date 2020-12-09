@@ -84,11 +84,11 @@ func registerConnAttemp(tl timelines.TimelinesWriter, conn net.Conn, port string
 	log.Println("Conn", port)
 
 	addr := conn.RemoteAddr().String()
-	point := &timelines.ConnAttemp{
-		Time: time.Now(),
-		Port: port,
-		Addr: addr,
+	connAttemp, err := timelines.NewConnAttemp(time.Now(), port, addr)
+	if err != nil {
+		// TODO: Handle it
 	}
-	tl.InsertConnAttemp(point)
+
+	tl.InsertConnAttemp(connAttemp)
 	conn.Close()
 }
