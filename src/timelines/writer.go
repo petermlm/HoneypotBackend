@@ -8,7 +8,7 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
-type TimelinesWiter interface {
+type TimelinesWriter interface {
 	Close()
 	InsertConnAttemp(connAttemp *ConnAttemp)
 }
@@ -18,7 +18,7 @@ type timelinesWriter struct {
 	writeAPI api.WriteAPI
 }
 
-func NewTimelinesWriter() TimelinesWiter {
+func NewTimelinesWriter() TimelinesWriter {
 	log.Println("Timelines starting")
 
 	tl := newTimelines()

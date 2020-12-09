@@ -24,7 +24,7 @@ func Start(ctx context.Context, ports []string) {
 	}
 }
 
-func listen(ctx context.Context, wait chan bool, tl timelines.TimelinesWiter, port string) {
+func listen(ctx context.Context, wait chan bool, tl timelines.TimelinesWriter, port string) {
 	defer func() { wait <- true }()
 
 	listener, err := createListener(port)
@@ -65,7 +65,7 @@ func createListener(port string) (net.Listener, error) {
 	return l, nil
 }
 
-func registerConnAttemp(tl timelines.TimelinesWiter, conn net.Conn, port string) {
+func registerConnAttemp(tl timelines.TimelinesWriter, conn net.Conn, port string) {
 	log.Println("Conn", port)
 
 	addr := conn.RemoteAddr().String()
