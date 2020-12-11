@@ -13,19 +13,10 @@ import (
 )
 
 func index(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	http.ServeFile(w, r, "cmd/webserver/index.html")
 }
 
 func getConnAttmps(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	e, ok := r.Context().Value("env").(*env)
 	if !ok {
 		http.Error(w, "Internal Error", http.StatusInternalServerError)
@@ -38,6 +29,27 @@ func getConnAttmps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	js, err := json.Marshal(connAttemps)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+func getMapData(w http.ResponseWriter, r *http.Request) {
+	e, ok := r.Context().Value("env").(*env)
+	if !ok {
+		http.Error(w, "Internal Error", http.StatusInternalServerError)
+		return
+	}
+	mapData, err := e.tl.GetMapData(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	js, err := json.Marshal(mapData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -62,6 +74,7 @@ func ServerMain() error {
 	router := mux.NewRouter()
 	router.HandleFunc("/", index).Methods("GET")
 	router.HandleFunc("/connAttemps", injectEnv(e, getConnAttmps)).Methods("GET")
+	router.HandleFunc("/map", injectEnv(e, getMapData)).Methods("GET")
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})

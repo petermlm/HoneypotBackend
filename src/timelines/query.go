@@ -12,6 +12,7 @@ import (
 type TimelinesQuery interface {
 	Close()
 	GetConnAttemps(context.Context) ([]*ConnAttemp, error)
+	GetMapData(context.Context) ([]*MapDataEntry, error)
 }
 
 type timelinesQuery struct {
@@ -80,9 +81,50 @@ func (t *timelinesQuery) GetConnAttemps(ctx context.Context) ([]*ConnAttemp, err
 	return ret, nil
 }
 
+func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error) {
+	query := makeMapDataQuery()
+	result, err := t.queryAPI.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]*MapDataEntry, 0)
+	for result.Next() {
+		record := result.Record()
+
+		countryCode, ok := record.ValueByKey("CountryCode").(string)
+		if !ok {
+			countryCode = ""
+		}
+		count, ok := record.Value().(int64)
+		if !ok {
+			log.Println(record.Value())
+			count = 0
+		}
+
+		mapDataEntry := &MapDataEntry{
+			CountryCode: countryCode,
+			Count:       count,
+		}
+		ret = append(ret, mapDataEntry)
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+
+	return ret, nil
+}
+
 func makeConnAttempsQuery() string {
 	return `from(bucket:"honeypot")
 		|> range(start: -10h)
 		|> filter(fn: (r) => r._measurement == "conn")
 		|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`
+}
+
+func makeMapDataQuery() string {
+	return `from(bucket: "honeypot/autogen")
+		|> range(start: -10h)
+		|> group(columns: ["CountryCode"], mode:"by")
+		|> count(column: "_value")`
 }

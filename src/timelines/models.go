@@ -11,8 +11,13 @@ type ConnAttemp struct {
 	Time        time.Time
 	Port        string
 	IP          string
-	ClientPort  string
 	CountryCode string
+	ClientPort  string
+}
+
+type MapDataEntry struct {
+	CountryCode string
+	Count       int64
 }
 
 func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
@@ -25,8 +30,8 @@ func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
 		Time:        tm,
 		Port:        port,
 		IP:          ipAndPort[0],
-		ClientPort:  ipAndPort[1],
 		CountryCode: "",
+		ClientPort:  ipAndPort[1],
 	}
 	return connAttem, nil
 }
@@ -45,10 +50,10 @@ func (c *ConnAttemp) toDbPoint() *dbPoint {
 	rep.Tags = make(map[string]string)
 	rep.Tags["Port"] = c.Port
 	rep.Tags["IP"] = c.IP
+	rep.Tags["CountryCode"] = c.CountryCode
 
 	rep.Fields = make(map[string]interface{})
 	rep.Fields["ClientPort"] = c.ClientPort
-	rep.Fields["CountryCode"] = c.CountryCode
 
 	return rep
 }

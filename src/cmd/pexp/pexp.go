@@ -17,7 +17,7 @@ func main() {
 	p.Publish(&timelines.ConnAttemp{
 		Time:       time.Now(),
 		Port:       "1234",
-		IP:         "178.5.1.161",
+		IP:         "94.46.160.198",
 		ClientPort: "15432",
 	})
 }
