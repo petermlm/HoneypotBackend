@@ -13,11 +13,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer p.Destroy()
 	p.Publish(&timelines.ConnAttemp{
 		Time:       time.Now(),
 		Port:       "1234",
 		IP:         "178.5.1.161",
 		ClientPort: "15432",
 	})
-	time.Sleep(time.Second * 3)
 }

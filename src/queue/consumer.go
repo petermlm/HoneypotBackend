@@ -32,6 +32,8 @@ func (c *consumer) Name() string {
 }
 
 func (c *consumer) Consume(ctx context.Context) (chan *timelines.ConnAttemp, error) {
+	var err error
+
 	msgs, err := c.queue.ch.Consume(
 		c.Name(), // queue
 		"",       // consumer
@@ -40,6 +42,15 @@ func (c *consumer) Consume(ctx context.Context) (chan *timelines.ConnAttemp, err
 		false,    // no-local
 		false,    // no-wait
 		nil,      // args
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.queue.ch.Qos(
+		1,     // prefetch count
+		0,     // prefetch size
+		false, // global
 	)
 	if err != nil {
 		return nil, err

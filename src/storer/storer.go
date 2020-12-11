@@ -12,6 +12,7 @@ func Start() error {
 	if err != nil {
 		return err
 	}
+	defer c.Destroy()
 
 	tl := timelines.NewTimelinesWriter()
 

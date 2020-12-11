@@ -21,11 +21,13 @@ func Start() error {
 	if err != nil {
 		return err
 	}
+	defer c.Destroy()
 
 	p, err := queue.NewPublisher(settings.RabbitmqTaskStoreConnAttemp)
 	if err != nil {
 		return err
 	}
+	defer p.Destroy()
 
 	// e := env{
 	// 	c:  c,
