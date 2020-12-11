@@ -2,8 +2,9 @@ package main
 
 import (
 	"honeypot/processor"
+	"log"
 )
 
 func main() {
-	processor.Start()
+	log.Println(processor.Start())
 }

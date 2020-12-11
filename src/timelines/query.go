@@ -59,12 +59,17 @@ func (t *timelinesQuery) GetConnAttemps(ctx context.Context) ([]*ConnAttemp, err
 		if !ok {
 			clientPort = ""
 		}
+		countryCode, ok := record.ValueByKey("CountryCode").(string)
+		if !ok {
+			countryCode = ""
+		}
 
 		connAttemp := &ConnAttemp{
-			Time:       record.Time(),
-			Port:       port,
-			IP:         ip,
-			ClientPort: clientPort,
+			Time:        record.Time(),
+			Port:        port,
+			IP:          ip,
+			ClientPort:  clientPort,
+			CountryCode: countryCode,
 		}
 		ret = append(ret, connAttemp)
 	}

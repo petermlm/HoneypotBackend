@@ -8,10 +8,11 @@ import (
 )
 
 type ConnAttemp struct {
-	Time       time.Time
-	Port       string
-	IP         string
-	ClientPort string
+	Time        time.Time
+	Port        string
+	IP          string
+	ClientPort  string
+	CountryCode string
 }
 
 func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
@@ -21,10 +22,11 @@ func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
 	}
 
 	connAttem := &ConnAttemp{
-		Time:       tm,
-		Port:       port,
-		IP:         ipAndPort[0],
-		ClientPort: ipAndPort[1],
+		Time:        tm,
+		Port:        port,
+		IP:          ipAndPort[0],
+		ClientPort:  ipAndPort[1],
+		CountryCode: "",
 	}
 	return connAttem, nil
 }
@@ -46,6 +48,7 @@ func (c *ConnAttemp) toDbPoint() *dbPoint {
 
 	rep.Fields = make(map[string]interface{})
 	rep.Fields["ClientPort"] = c.ClientPort
+	rep.Fields["CountryCode"] = c.CountryCode
 
 	return rep
 }
