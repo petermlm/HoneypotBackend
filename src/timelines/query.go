@@ -119,12 +119,13 @@ func makeConnAttempsQuery() string {
 	return `from(bucket:"honeypot")
 		|> range(start: -10h)
 		|> filter(fn: (r) => r._measurement == "conn")
-		|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`
+		|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+		|> sort(columns: ["_time"], desc: true)`
 }
 
 func makeMapDataQuery() string {
 	return `from(bucket: "honeypot/autogen")
-		|> range(start: -10h)
+		|> range(start: -1mo)
 		|> group(columns: ["CountryCode"], mode:"by")
 		|> count(column: "_value")`
 }
