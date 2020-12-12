@@ -117,7 +117,7 @@ func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error
 
 func makeConnAttempsQuery() string {
 	return `from(bucket:"honeypot")
-		|> range(start: -10h)
+		|> range(start: -1mo)
 		|> filter(fn: (r) => r._measurement == "conn")
 		|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
 		|> sort(columns: ["_time"], desc: true)`
