@@ -11,8 +11,10 @@ import (
 
 type TimelinesQuery interface {
 	Close()
-	GetConnAttemps(context.Context) ([]*ConnAttemp, error)
 	GetMapData(context.Context) ([]*MapDataEntry, error)
+	GetConnAttemps(context.Context) ([]*ConnAttemp, error)
+	GetTopConsumers(context.Context) ([]*MapDataEntry, error)
+	GetTopFlavours(context.Context) ([]*PortCount, error)
 }
 
 type timelinesQuery struct {
@@ -35,6 +37,40 @@ func NewTimelinesQuery() TimelinesQuery {
 func (t *timelinesQuery) Close() {
 	t.timelines.close()
 	log.Println("Timelines closed")
+}
+
+func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error) {
+	query := makeMapDataQuery()
+	result, err := t.queryAPI.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]*MapDataEntry, 0)
+	for result.Next() {
+		record := result.Record()
+
+		countryCode, ok := record.ValueByKey("CountryCode").(string)
+		if !ok {
+			countryCode = ""
+		}
+		count, ok := record.Value().(int64)
+		if !ok {
+			log.Println(record.Value())
+			count = 0
+		}
+
+		mapDataEntry := &MapDataEntry{
+			CountryCode: countryCode,
+			Count:       count,
+		}
+		ret = append(ret, mapDataEntry)
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+
+	return ret, nil
 }
 
 func (t *timelinesQuery) GetConnAttemps(ctx context.Context) ([]*ConnAttemp, error) {
@@ -81,8 +117,8 @@ func (t *timelinesQuery) GetConnAttemps(ctx context.Context) ([]*ConnAttemp, err
 	return ret, nil
 }
 
-func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error) {
-	query := makeMapDataQuery()
+func (t *timelinesQuery) GetTopConsumers(ctx context.Context) ([]*MapDataEntry, error) {
+	query := makeTopConsumersQuery()
 	result, err := t.queryAPI.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -102,17 +138,58 @@ func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error
 			count = 0
 		}
 
-		mapDataEntry := &MapDataEntry{
+		portCount := &MapDataEntry{
 			CountryCode: countryCode,
 			Count:       count,
 		}
-		ret = append(ret, mapDataEntry)
+		ret = append(ret, portCount)
 	}
 	if result.Err() != nil {
 		return nil, result.Err()
 	}
 
 	return ret, nil
+}
+
+func (t *timelinesQuery) GetTopFlavours(ctx context.Context) ([]*PortCount, error) {
+	query := makeTopFlavoursQuery()
+	result, err := t.queryAPI.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]*PortCount, 0)
+	for result.Next() {
+		record := result.Record()
+
+		port, ok := record.ValueByKey("Port").(string)
+		if !ok {
+			port = ""
+		}
+		count, ok := record.Value().(int64)
+		if !ok {
+			log.Println(record.Value())
+			count = 0
+		}
+
+		portCount := &PortCount{
+			Port:  port,
+			Count: count,
+		}
+		ret = append(ret, portCount)
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+
+	return ret, nil
+}
+
+func makeMapDataQuery() string {
+	return `from(bucket: "honeypot/autogen")
+		|> range(start: -1mo)
+		|> group(columns: ["CountryCode"], mode:"by")
+		|> count(column: "_value")`
 }
 
 func makeConnAttempsQuery() string {
@@ -123,9 +200,22 @@ func makeConnAttempsQuery() string {
 		|> sort(columns: ["_time"], desc: true)`
 }
 
-func makeMapDataQuery() string {
+func makeTopConsumersQuery() string {
 	return `from(bucket: "honeypot/autogen")
 		|> range(start: -1mo)
 		|> group(columns: ["CountryCode"], mode:"by")
-		|> count(column: "_value")`
+		|> count(column: "_value")
+        |> group()
+        |> sort(columns: ["_value"], desc: true)
+  		|> limit(n: 10, offset: 0)`
+}
+
+func makeTopFlavoursQuery() string {
+	return `from(bucket: "honeypot/autogen")
+		|> range(start: -1mo)
+		|> group(columns: ["Port"], mode:"by")
+		|> count(column: "_value")
+        |> group()
+        |> sort(columns: ["_value"], desc: true)
+  		|> limit(n: 10, offset: 0)`
 }

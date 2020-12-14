@@ -20,6 +20,11 @@ type MapDataEntry struct {
 	Count       int64
 }
 
+type PortCount struct {
+	Port  string
+	Count int64
+}
+
 func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
 	ipAndPort, err := separateIPAndPort(addr)
 	if err != nil {
