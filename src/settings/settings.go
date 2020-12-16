@@ -2,11 +2,11 @@ package settings
 
 // Ports to be listent to
 var Ports = [...]string{
-	"5432",
-	"3306",
-	"27017",
-	"7474",
-	"9200",
+	"3306",  // MySQL
+	"5432",  // PostgreSQL
+	"7474",  // Neo4j
+	"9200",  // Elasticsearch
+	"27017", // MongoDB
 }
 
 const (

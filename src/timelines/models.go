@@ -13,6 +13,7 @@ type ConnAttemp struct {
 	IP          string
 	CountryCode string
 	ClientPort  string
+	Bytes       []byte
 }
 
 type MapDataEntry struct {
@@ -59,6 +60,7 @@ func (c *ConnAttemp) toDbPoint() *dbPoint {
 
 	rep.Fields = make(map[string]interface{})
 	rep.Fields["ClientPort"] = c.ClientPort
+	rep.Fields["Bytes"] = c.Bytes
 
 	return rep
 }
