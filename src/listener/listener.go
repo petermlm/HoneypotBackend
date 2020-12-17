@@ -91,6 +91,15 @@ func createListener(port string) (net.Listener, error) {
 func sendToProcessor(publisher queue.Publisher, conn net.Conn, port string) {
 	defer conn.Close()
 
+	// Create conn attemp
+	addr := conn.RemoteAddr().String()
+	connAttemp, err := timelines.NewConnAttemp(time.Now(), port, addr)
+	if err != nil {
+		return
+	}
+	defer publisher.Publish(connAttemp)
+
+	// Try to read something
 	deadline := time.Now().Add(time.Second * 5)
 	conn.SetReadDeadline(deadline)
 
@@ -100,15 +109,7 @@ func sendToProcessor(publisher queue.Publisher, conn net.Conn, port string) {
 		return
 	}
 
-	addr := conn.RemoteAddr().String()
-	connAttemp, err := timelines.NewConnAttemp(time.Now(), port, addr)
-	if err != nil {
-		return
-	}
-
 	if n >= 0 {
 		connAttemp.Bytes = b
 	}
-
-	publisher.Publish(connAttemp)
 }
