@@ -201,6 +201,7 @@ func makeConnAttempsQuery() string {
 		|> filter(fn: (r) => r._measurement == "conn")
 		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
         |> drop(columns: ["Bytes", "ClientPort"])
+		|> group()
 		|> sort(columns: ["_time"], desc: true)`
 }
 
