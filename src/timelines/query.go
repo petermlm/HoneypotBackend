@@ -191,7 +191,8 @@ func makeMapDataQuery() string {
 		|> filter(fn: (r) => r._measurement == "conn")
 		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
 		|> group(columns: ["CountryCode"], mode:"by")
-		|> count(column: "IP")`
+		|> count(column: "IP")
+		|> rename(columns: {"IP": "_value"})`
 }
 
 func makeConnAttempsQuery() string {
@@ -212,7 +213,8 @@ func makeTopConsumersQuery() string {
 		|> count(column: "IP")
         |> group()
         |> sort(columns: ["IP"], desc: true)
-  		|> limit(n: 10, offset: 0)`
+  		|> limit(n: 10, offset: 0)
+		|> rename(columns: {"IP": "_value"})`
 }
 
 func makeTopFlavoursQuery() string {
@@ -224,5 +226,6 @@ func makeTopFlavoursQuery() string {
         |> count(column: "IP")
         |> group()
         |> sort(columns: ["IP"], desc: true)
-  		|> limit(n: 10, offset: 0)`
+  		|> limit(n: 10, offset: 0)
+		|> rename(columns: {"IP": "_value"})`
 }
