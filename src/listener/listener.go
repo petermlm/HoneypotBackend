@@ -111,5 +111,7 @@ func sendToProcessor(publisher queue.Publisher, conn net.Conn, port string) {
 
 	if n >= 0 {
 		connAttemp.Bytes = b
+	} else {
+		connAttemp.Bytes = make([]byte, 0)
 	}
 }
