@@ -188,34 +188,41 @@ func (t *timelinesQuery) GetTopFlavours(ctx context.Context) ([]*PortCount, erro
 func makeMapDataQuery() string {
 	return `from(bucket: "honeypot/autogen")
 		|> range(start: -1mo)
+		|> filter(fn: (r) => r._measurement == "conn")
+		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
 		|> group(columns: ["CountryCode"], mode:"by")
-		|> count(column: "_value")`
+		|> count(column: "IP")`
 }
 
 func makeConnAttempsQuery() string {
 	return `from(bucket:"honeypot")
 		|> range(start: -1mo)
 		|> filter(fn: (r) => r._measurement == "conn")
-        |> group()
+		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
+        |> drop(columns: ["Bytes", "ClientPort"])
 		|> sort(columns: ["_time"], desc: true)`
 }
 
 func makeTopConsumersQuery() string {
 	return `from(bucket: "honeypot/autogen")
 		|> range(start: -1mo)
+		|> filter(fn: (r) => r._measurement == "conn")
+		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
 		|> group(columns: ["CountryCode"], mode:"by")
-		|> count(column: "_value")
+		|> count(column: "IP")
         |> group()
-        |> sort(columns: ["_value"], desc: true)
+        |> sort(columns: ["IP"], desc: true)
   		|> limit(n: 10, offset: 0)`
 }
 
 func makeTopFlavoursQuery() string {
 	return `from(bucket: "honeypot/autogen")
 		|> range(start: -1mo)
+		|> filter(fn: (r) => r._measurement == "conn")
+		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
 		|> group(columns: ["Port"], mode:"by")
-		|> count(column: "_value")
+        |> count(column: "IP")
         |> group()
-        |> sort(columns: ["_value"], desc: true)
+        |> sort(columns: ["IP"], desc: true)
   		|> limit(n: 10, offset: 0)`
 }
