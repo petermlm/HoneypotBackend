@@ -2,10 +2,18 @@ package timelines
 
 import (
 	"encoding/json"
-	"fmt"
+	"regexp"
 	"strings"
 	"time"
 )
+
+const ipv4Str = `^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`
+
+var reIPv4 *regexp.Regexp
+
+func init() {
+	reIPv4 = regexp.MustCompile(ipv4Str)
+}
 
 type ConnAttemp struct {
 	Time        time.Time
@@ -31,13 +39,20 @@ func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
 	if err != nil {
 		return nil, err
 	}
+	ip := ipAndPort[0]
+	clientPort := ipAndPort[1]
+
+	if !reIPv4.Match([]byte(ip)) {
+		return nil, newInvalidIP7(ip)
+	}
 
 	connAttem := &ConnAttemp{
 		Time:        tm,
 		Port:        port,
-		IP:          ipAndPort[0],
+		IP:          ip,
 		CountryCode: "",
-		ClientPort:  ipAndPort[1],
+		ClientPort:  clientPort,
+		Bytes:       make([]byte, 0),
 	}
 	return connAttem, nil
 }
@@ -65,15 +80,19 @@ func (c *ConnAttemp) toDbPoint() *dbPoint {
 	return rep
 }
 
-func (c *ConnAttemp) Marshal() ([]byte, error) {
-	return json.Marshal(c)
+func (c *ConnAttemp) ToJSON() ([]byte, error) {
+	b, err := json.Marshal(c)
+	if err != nil {
+		return nil, newCantMarshalConnAttemp(err)
+	}
+	return b, nil
 }
 
 func ConnAttempFromJson(b []byte) (*ConnAttemp, error) {
 	var connAttemp *ConnAttemp
 	err := json.Unmarshal(b, &connAttemp)
 	if err != nil {
-		return nil, err
+		return nil, newCantUnarshalConnAttemp(err)
 	}
 	return connAttemp, nil
 }
@@ -81,7 +100,7 @@ func ConnAttempFromJson(b []byte) (*ConnAttemp, error) {
 func separateIPAndPort(addr string) ([]string, error) {
 	strs := strings.Split(addr, ":")
 	if len(strs) != 2 {
-		return nil, fmt.Errorf("Addr can't be separated by ':', %s", addr)
+		return nil, newCantSeparateAddrError(addr)
 	}
 	return strs, nil
 }

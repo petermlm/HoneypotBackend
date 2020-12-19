@@ -33,7 +33,7 @@ func (p *publisher) Name() string {
 }
 
 func (p *publisher) Publish(connAttemp *timelines.ConnAttemp) error {
-	js, err := connAttemp.Marshal()
+	js, err := connAttemp.ToJSON()
 	if err != nil {
 		return err
 	}

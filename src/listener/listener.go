@@ -82,7 +82,7 @@ func createListener(port string) (net.Listener, error) {
 	l, err := net.Listen("tcp", connAddr)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error listening: %w", err.Error())
+		return nil, fmt.Errorf("Error listening: %v", err.Error())
 	}
 
 	return l, nil
@@ -111,7 +111,5 @@ func sendToProcessor(publisher queue.Publisher, conn net.Conn, port string) {
 
 	if n >= 0 {
 		connAttemp.Bytes = b
-	} else {
-		connAttemp.Bytes = make([]byte, 0)
 	}
 }
