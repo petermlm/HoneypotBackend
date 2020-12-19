@@ -15,6 +15,10 @@ func init() {
 	reIPv4 = regexp.MustCompile(ipv4Str)
 }
 
+type SingleCount struct {
+	Count int
+}
+
 type ConnAttemp struct {
 	Time        time.Time
 	Port        string

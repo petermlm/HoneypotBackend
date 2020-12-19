@@ -15,7 +15,7 @@ type TimelinesQuery interface {
 	GetConnAttemps(context.Context) ([]*ConnAttemp, error)
 	GetTopConsumers(context.Context) ([]*MapDataEntry, error)
 	GetTopFlavours(context.Context) ([]*PortCount, error)
-	GetTotalConsumptions(context.Context) (int, error)
+	GetTotalConsumptions(context.Context) (*SingleCount, error)
 }
 
 type timelinesQuery struct {
@@ -40,22 +40,22 @@ func (t *timelinesQuery) Close() {
 	log.Println("Timelines closed")
 }
 
-func (t *timelinesQuery) GetTotalConsumptions(ctx context.Context) (int, error) {
+func (t *timelinesQuery) GetTotalConsumptions(ctx context.Context) (*SingleCount, error) {
 	query := makeTotalConsumptions()
 	result, err := t.queryAPI.Query(ctx, query)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	if !result.Next() {
-		return 0, fmt.Errorf("No results")
+		return nil, fmt.Errorf("No results")
 	}
 
 	count, ok := result.Record().ValueByKey("Count").(int64)
 	if !ok {
-		return 0, fmt.Errorf("No results")
+		return nil, fmt.Errorf("No results")
 	}
-	return int(count), nil
+	return &SingleCount{int(count)}, nil
 }
 
 func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error) {

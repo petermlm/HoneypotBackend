@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"context"
-	"encoding/json"
 	"honeypot/settings"
 	"log"
 	"net/http"
@@ -17,110 +16,47 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTotalConsumptions(w http.ResponseWriter, r *http.Request) {
-	e, ok := r.Context().Value("env").(*env)
-	if !ok {
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		return
-	}
-	count, err := e.tl.GetTotalConsumptions(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	countJSON := make(map[string]int)
-	countJSON["Count"] = count
-	js, err := json.Marshal(countJSON)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	timelinesRequest(w, r, func(e *env) (interface{}, error) {
+		return e.tl.GetTotalConsumptions(r.Context())
+	})
 }
 
 func getMapData(w http.ResponseWriter, r *http.Request) {
-	e, ok := r.Context().Value("env").(*env)
-	if !ok {
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		return
-	}
-	mapData, err := e.tl.GetMapData(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	js, err := json.Marshal(mapData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	timelinesRequest(w, r, func(e *env) (interface{}, error) {
+		return e.tl.GetMapData(r.Context())
+	})
 }
 
 func getConnAttmps(w http.ResponseWriter, r *http.Request) {
-	e, ok := r.Context().Value("env").(*env)
-	if !ok {
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		return
-	}
-	connAttemps, err := e.tl.GetConnAttemps(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	js, err := json.Marshal(connAttemps)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	timelinesRequest(w, r, func(e *env) (interface{}, error) {
+		return e.tl.GetConnAttemps(r.Context())
+	})
 }
 
 func getTopConsumers(w http.ResponseWriter, r *http.Request) {
-	e, ok := r.Context().Value("env").(*env)
-	if !ok {
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		return
-	}
-	mapData, err := e.tl.GetTopConsumers(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	js, err := json.Marshal(mapData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	timelinesRequest(w, r, func(e *env) (interface{}, error) {
+		return e.tl.GetTopConsumers(r.Context())
+	})
 }
 
 func getTopFlavours(w http.ResponseWriter, r *http.Request) {
+	timelinesRequest(w, r, func(e *env) (interface{}, error) {
+		return e.tl.GetTopFlavours(r.Context())
+	})
+}
+
+func timelinesRequest(w http.ResponseWriter, r *http.Request, queryer func(*env) (interface{}, error)) {
 	e, ok := r.Context().Value("env").(*env)
 	if !ok {
 		http.Error(w, "Internal Error", http.StatusInternalServerError)
 		return
 	}
-	mapData, err := e.tl.GetTopFlavours(r.Context())
+	ret, err := queryer(e)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	js, err := json.Marshal(mapData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(js)
+	responde(w, r, ret)
 }
 
 func injectEnv(e *env, next http.HandlerFunc) http.HandlerFunc {
@@ -138,6 +74,7 @@ func ServerMain() error {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", index).Methods("GET")
+
 	router.HandleFunc("/totalConsumptions", injectEnv(e, getTotalConsumptions)).Methods("GET")
 	router.HandleFunc("/map", injectEnv(e, getMapData)).Methods("GET")
 	router.HandleFunc("/connAttemps", injectEnv(e, getConnAttmps)).Methods("GET")
