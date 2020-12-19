@@ -11,11 +11,11 @@ import (
 
 type TimelinesQuery interface {
 	Close()
-	GetMapData(context.Context) ([]*MapDataEntry, error)
-	GetConnAttemps(context.Context) ([]*ConnAttemp, error)
-	GetTopConsumers(context.Context) ([]*MapDataEntry, error)
-	GetTopFlavours(context.Context) ([]*PortCount, error)
-	GetTotalConsumptions(context.Context) (*SingleCount, error)
+	GetTotalConsumptions(context.Context, string) (*SingleCount, error)
+	GetMapData(context.Context, string) ([]*MapDataEntry, error)
+	GetConnAttemps(context.Context, string) ([]*ConnAttemp, error)
+	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)
+	GetTopFlavours(context.Context, string) ([]*PortCount, error)
 }
 
 type timelinesQuery struct {
@@ -40,9 +40,26 @@ func (t *timelinesQuery) Close() {
 	log.Println("Timelines closed")
 }
 
-func (t *timelinesQuery) GetTotalConsumptions(ctx context.Context) (*SingleCount, error) {
-	query := makeTotalConsumptions()
+func (t *timelinesQuery) getCommon(
+	ctx context.Context,
+	rangeValue string,
+	fluxQuery func(string) (string, error),
+) (*api.QueryTableResult, error) {
+	query, err := fluxQuery(rangeValue)
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := t.queryAPI.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (t *timelinesQuery) GetTotalConsumptions(ctx context.Context, rangeValue string) (*SingleCount, error) {
+	result, err := t.getCommon(ctx, rangeValue, makeTotalConsumptions)
 	if err != nil {
 		return nil, err
 	}
@@ -58,9 +75,8 @@ func (t *timelinesQuery) GetTotalConsumptions(ctx context.Context) (*SingleCount
 	return &SingleCount{int(count)}, nil
 }
 
-func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error) {
-	query := makeMapDataQuery()
-	result, err := t.queryAPI.Query(ctx, query)
+func (t *timelinesQuery) GetMapData(ctx context.Context, rangeValue string) ([]*MapDataEntry, error) {
+	result, err := t.getCommon(ctx, rangeValue, makeMapDataQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +108,8 @@ func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error
 	return ret, nil
 }
 
-func (t *timelinesQuery) GetConnAttemps(ctx context.Context) ([]*ConnAttemp, error) {
-	query := makeConnAttempsQuery()
-	result, err := t.queryAPI.Query(ctx, query)
+func (t *timelinesQuery) GetConnAttemps(ctx context.Context, rangeValue string) ([]*ConnAttemp, error) {
+	result, err := t.getCommon(ctx, rangeValue, makeConnAttempsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -136,9 +151,8 @@ func (t *timelinesQuery) GetConnAttemps(ctx context.Context) ([]*ConnAttemp, err
 	return ret, nil
 }
 
-func (t *timelinesQuery) GetTopConsumers(ctx context.Context) ([]*MapDataEntry, error) {
-	query := makeTopConsumersQuery()
-	result, err := t.queryAPI.Query(ctx, query)
+func (t *timelinesQuery) GetTopConsumers(ctx context.Context, rangeValue string) ([]*MapDataEntry, error) {
+	result, err := t.getCommon(ctx, rangeValue, makeTopConsumersQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -170,9 +184,8 @@ func (t *timelinesQuery) GetTopConsumers(ctx context.Context) ([]*MapDataEntry, 
 	return ret, nil
 }
 
-func (t *timelinesQuery) GetTopFlavours(ctx context.Context) ([]*PortCount, error) {
-	query := makeTopFlavoursQuery()
-	result, err := t.queryAPI.Query(ctx, query)
+func (t *timelinesQuery) GetTopFlavours(ctx context.Context, rangeValue string) ([]*PortCount, error) {
+	result, err := t.getCommon(ctx, rangeValue, makeTopFlavoursQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -202,60 +215,4 @@ func (t *timelinesQuery) GetTopFlavours(ctx context.Context) ([]*PortCount, erro
 	}
 
 	return ret, nil
-}
-
-func makeTotalConsumptions() string {
-	return `from(bucket:"honeypot")
-		|> range(start: -1mo)
-		|> filter(fn: (r) => r._measurement == "conn")
-        |> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
-        |> group()
-  		|> count(column: "IP")
-		|> rename(columns: {"IP": "Count"})`
-}
-
-func makeMapDataQuery() string {
-	return `from(bucket: "honeypot/autogen")
-		|> range(start: -1mo)
-		|> filter(fn: (r) => r._measurement == "conn")
-		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
-		|> group(columns: ["CountryCode"], mode:"by")
-		|> count(column: "IP")
-		|> rename(columns: {"IP": "_value"})`
-}
-
-func makeConnAttempsQuery() string {
-	return `from(bucket:"honeypot")
-		|> range(start: -1mo)
-		|> filter(fn: (r) => r._measurement == "conn")
-		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
-        |> drop(columns: ["Bytes", "ClientPort"])
-		|> group()
-		|> sort(columns: ["_time"], desc: true)`
-}
-
-func makeTopConsumersQuery() string {
-	return `from(bucket: "honeypot/autogen")
-		|> range(start: -1mo)
-		|> filter(fn: (r) => r._measurement == "conn")
-		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
-		|> group(columns: ["CountryCode"], mode:"by")
-		|> count(column: "IP")
-        |> group()
-        |> sort(columns: ["IP"], desc: true)
-  		|> limit(n: 10, offset: 0)
-		|> rename(columns: {"IP": "_value"})`
-}
-
-func makeTopFlavoursQuery() string {
-	return `from(bucket: "honeypot/autogen")
-		|> range(start: -1mo)
-		|> filter(fn: (r) => r._measurement == "conn")
-		|> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
-		|> group(columns: ["Port"], mode:"by")
-        |> count(column: "IP")
-        |> group()
-        |> sort(columns: ["IP"], desc: true)
-  		|> limit(n: 10, offset: 0)
-		|> rename(columns: {"IP": "_value"})`
 }

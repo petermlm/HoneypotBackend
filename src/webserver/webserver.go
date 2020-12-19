@@ -15,50 +15,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "cmd/webserver/index.html")
 }
 
-func getTotalConsumptions(w http.ResponseWriter, r *http.Request) {
-	timelinesRequest(w, r, func(e *env) (interface{}, error) {
-		return e.tl.GetTotalConsumptions(r.Context())
-	})
-}
-
-func getMapData(w http.ResponseWriter, r *http.Request) {
-	timelinesRequest(w, r, func(e *env) (interface{}, error) {
-		return e.tl.GetMapData(r.Context())
-	})
-}
-
-func getConnAttmps(w http.ResponseWriter, r *http.Request) {
-	timelinesRequest(w, r, func(e *env) (interface{}, error) {
-		return e.tl.GetConnAttemps(r.Context())
-	})
-}
-
-func getTopConsumers(w http.ResponseWriter, r *http.Request) {
-	timelinesRequest(w, r, func(e *env) (interface{}, error) {
-		return e.tl.GetTopConsumers(r.Context())
-	})
-}
-
-func getTopFlavours(w http.ResponseWriter, r *http.Request) {
-	timelinesRequest(w, r, func(e *env) (interface{}, error) {
-		return e.tl.GetTopFlavours(r.Context())
-	})
-}
-
-func timelinesRequest(w http.ResponseWriter, r *http.Request, queryer func(*env) (interface{}, error)) {
-	e, ok := r.Context().Value("env").(*env)
-	if !ok {
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		return
-	}
-	ret, err := queryer(e)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	responde(w, r, ret)
-}
-
 func injectEnv(e *env, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), "env", e)

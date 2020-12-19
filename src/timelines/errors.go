@@ -49,3 +49,15 @@ func newCantSeparateAddrError(addr string) error {
 func (e *CantSeparateAddrError) Error() string {
 	return fmt.Sprintf("Addr can't be separated by ':', %s", e.addr)
 }
+
+type InvalidRange struct {
+	RangeValue string
+}
+
+func newInvalidRange(rangeValue string) error {
+	return &InvalidRange{rangeValue}
+}
+
+func (e *InvalidRange) Error() string {
+	return fmt.Sprintf("Invalid Flux Range: %s", e.RangeValue)
+}
