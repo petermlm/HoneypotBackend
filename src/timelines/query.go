@@ -15,6 +15,7 @@ type TimelinesQuery interface {
 	GetConnAttemps(context.Context) ([]*ConnAttemp, error)
 	GetTopConsumers(context.Context) ([]*MapDataEntry, error)
 	GetTopFlavours(context.Context) ([]*PortCount, error)
+	GetTotalConsumptions(context.Context) (int, error)
 }
 
 type timelinesQuery struct {
@@ -37,6 +38,24 @@ func NewTimelinesQuery() TimelinesQuery {
 func (t *timelinesQuery) Close() {
 	t.timelines.close()
 	log.Println("Timelines closed")
+}
+
+func (t *timelinesQuery) GetTotalConsumptions(ctx context.Context) (int, error) {
+	query := makeTotalConsumptions()
+	result, err := t.queryAPI.Query(ctx, query)
+	if err != nil {
+		return 0, err
+	}
+
+	if !result.Next() {
+		return 0, fmt.Errorf("No results")
+	}
+
+	count, ok := result.Record().ValueByKey("Count").(int64)
+	if !ok {
+		return 0, fmt.Errorf("No results")
+	}
+	return int(count), nil
 }
 
 func (t *timelinesQuery) GetMapData(ctx context.Context) ([]*MapDataEntry, error) {
@@ -183,6 +202,16 @@ func (t *timelinesQuery) GetTopFlavours(ctx context.Context) ([]*PortCount, erro
 	}
 
 	return ret, nil
+}
+
+func makeTotalConsumptions() string {
+	return `from(bucket:"honeypot")
+		|> range(start: -1mo)
+		|> filter(fn: (r) => r._measurement == "conn")
+        |> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
+        |> group()
+  		|> count(column: "IP")
+		|> rename(columns: {"IP": "Count"})`
 }
 
 func makeMapDataQuery() string {
