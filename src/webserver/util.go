@@ -17,3 +17,8 @@ func getKeyFromURL(r *http.Request, key string) (string, error) {
 	errStr := fmt.Sprintf("Not in request: %s", key)
 	return "", errors.New(errStr)
 }
+
+func getQueryParamRange(r *http.Request) (string, error) {
+	rangeValue := r.URL.Query().Get("range")
+	return rangeValue, nil
+}
