@@ -37,7 +37,7 @@ func getTopFlavours(w http.ResponseWriter, r *http.Request) {
 
 func getTimeRange(r *http.Request) string {
 	rangeValue, err := getQueryParamRange(r)
-	if err != nil {
+	if err != nil || rangeValue == "" {
 		return timelines.DefaultValidRanges
 	}
 	return rangeValue

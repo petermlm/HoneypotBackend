@@ -5,6 +5,7 @@ import "fmt"
 const DefaultValidRanges string = "mo"
 
 var validRanges = map[string]bool{
+	"y":  true,
 	"mo": true,
 	"w":  true,
 	"d":  true,
