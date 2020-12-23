@@ -78,3 +78,17 @@ func makeTopFlavoursQuery(rangeValue string) (string, error) {
   		|> limit(n: 10, offset: 0)
 		|> rename(columns: {"IP": "_value"})`)
 }
+
+func makeBytesQuery(rangeValue, port string) (string, error) {
+	queryTlp := `
+		|> filter(fn: (r) => r._measurement == "conn" and r.Port == "%s")
+        |> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
+		|> sort(columns: ["_time"], desc: true)
+        |> limit(n: 100)`
+	queryPart := fmt.Sprintf(queryTlp, port)
+	return makeQueryCommon(rangeValue, queryPart)
+}
+
+func makeBytesElasticsearchQuery(rangeValue string) (string, error) {
+	return makeBytesQuery(rangeValue, "9200")
+}

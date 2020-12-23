@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"honeypot/settings"
 	"log"
+	"strings"
 
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
@@ -16,6 +17,7 @@ type TimelinesQuery interface {
 	GetConnAttemps(context.Context, string) ([]*ConnAttemp, error)
 	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)
 	GetTopFlavours(context.Context, string) ([]*PortCount, error)
+	GetBytes(context.Context, string) ([]string, error)
 }
 
 type timelinesQuery struct {
@@ -209,6 +211,31 @@ func (t *timelinesQuery) GetTopFlavours(ctx context.Context, rangeValue string) 
 			Count: count,
 		}
 		ret = append(ret, portCount)
+	}
+	if result.Err() != nil {
+		return nil, result.Err()
+	}
+
+	return ret, nil
+}
+
+func (t *timelinesQuery) GetBytes(ctx context.Context, rangeValue string) ([]string, error) {
+	result, err := t.getCommon(ctx, rangeValue, makeBytesElasticsearchQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := make([]string, 0)
+	for result.Next() {
+		record := result.Record()
+
+		bytes, ok := record.ValueByKey("Bytes").(string)
+		if !ok {
+			bytes = ""
+		}
+		bytes = strings.ReplaceAll(bytes, "\u0000", "")
+		bytes = strings.TrimSpace(bytes)
+		ret = append(ret, bytes)
 	}
 	if result.Err() != nil {
 		return nil, result.Err()
