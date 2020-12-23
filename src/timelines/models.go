@@ -38,6 +38,11 @@ type PortCount struct {
 	Count int64
 }
 
+type BytesList struct {
+	Time  time.Time
+	Bytes string
+}
+
 func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
 	ipAndPort, err := separateIPAndPort(addr)
 	if err != nil {

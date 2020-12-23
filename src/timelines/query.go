@@ -17,7 +17,7 @@ type TimelinesQuery interface {
 	GetConnAttemps(context.Context, string) ([]*ConnAttemp, error)
 	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)
 	GetTopFlavours(context.Context, string) ([]*PortCount, error)
-	GetBytes(context.Context, string) ([]string, error)
+	GetBytes(context.Context, string) ([]*BytesList, error)
 }
 
 type timelinesQuery struct {
@@ -219,13 +219,13 @@ func (t *timelinesQuery) GetTopFlavours(ctx context.Context, rangeValue string) 
 	return ret, nil
 }
 
-func (t *timelinesQuery) GetBytes(ctx context.Context, rangeValue string) ([]string, error) {
+func (t *timelinesQuery) GetBytes(ctx context.Context, rangeValue string) ([]*BytesList, error) {
 	result, err := t.getCommon(ctx, rangeValue, makeBytesElasticsearchQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make([]string, 0)
+	ret := make([]*BytesList, 0)
 	for result.Next() {
 		record := result.Record()
 
@@ -235,7 +235,12 @@ func (t *timelinesQuery) GetBytes(ctx context.Context, rangeValue string) ([]str
 		}
 		bytes = strings.ReplaceAll(bytes, "\u0000", "")
 		bytes = strings.TrimSpace(bytes)
-		ret = append(ret, bytes)
+
+		byteList := &BytesList{
+			Time:  record.Time(),
+			Bytes: bytes,
+		}
+		ret = append(ret, byteList)
 	}
 	if result.Err() != nil {
 		return nil, result.Err()
