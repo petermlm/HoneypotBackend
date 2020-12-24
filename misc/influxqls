@@ -1,0 +1,5 @@
+select * from conn where Port='3306' limit 50
+select * from conn where Port='5432' limit 50
+select * from conn where Port='7474' limit 50
+select * from conn where Port='9200' limit 50
+select * from conn where Port='27017' limit 50
