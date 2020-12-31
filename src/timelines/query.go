@@ -17,7 +17,7 @@ type TimelinesQuery interface {
 	GetConnAttemps(context.Context, string) ([]*ConnAttemp, error)
 	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)
 	GetTopFlavours(context.Context, string) ([]*PortCount, error)
-	GetBytes(context.Context, string) ([]*BytesList, error)
+	GetBytes(context.Context, string, string) ([]*BytesList, error)
 }
 
 type timelinesQuery struct {
@@ -219,8 +219,23 @@ func (t *timelinesQuery) GetTopFlavours(ctx context.Context, rangeValue string) 
 	return ret, nil
 }
 
-func (t *timelinesQuery) GetBytes(ctx context.Context, rangeValue string) ([]*BytesList, error) {
-	result, err := t.getCommon(ctx, rangeValue, makeBytesElasticsearchQuery)
+func (t *timelinesQuery) GetBytes(ctx context.Context, rangeValue string, serviceValue string) ([]*BytesList, error) {
+	var fluxQuery func(string) (string, error)
+	switch serviceValue {
+	case "mysql":
+		fluxQuery = makeBytesMySQLQuery
+	case "postgresql":
+		fluxQuery = makeBytesPostgreSQLQuery
+	case "neo4j":
+		fluxQuery = makeBytesNeo4j
+	case "elasticsearch":
+		fluxQuery = makeBytesElasticsearchQuery
+	case "mongodb":
+		fluxQuery = makeBytesMongoDBQuery
+	default:
+	}
+
+	result, err := t.getCommon(ctx, rangeValue, fluxQuery)
 	if err != nil {
 		return nil, err
 	}

@@ -36,7 +36,7 @@ func ServerMain() error {
 	router.HandleFunc("/connAttemps", injectEnv(e, getConnAttmps)).Methods("GET")
 	router.HandleFunc("/topConsumers", injectEnv(e, getTopConsumers)).Methods("GET")
 	router.HandleFunc("/topFlavours", injectEnv(e, getTopFlavours)).Methods("GET")
-	router.HandleFunc("/getBytes", injectEnv(e, getBytes)).Methods("GET")
+	router.HandleFunc("/getBytes/{service:[a-zA-Z0-9]+}", injectEnv(e, getBytes)).Methods("GET")
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})

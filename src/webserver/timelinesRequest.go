@@ -36,9 +36,15 @@ func getTopFlavours(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBytes(w http.ResponseWriter, r *http.Request) {
-	timelinesRequest(w, r, func(e *env, rangeValue string) (interface{}, error) {
-		return e.tl.GetBytes(r.Context(), rangeValue)
-	})
+	serviceValue, err := getKeyFromURL(r, "service")
+	if err != nil {
+		http.Error(w, "Invalid service", http.StatusBadRequest)
+		return
+	}
+	queryer := func(e *env, rangeValue string) (interface{}, error) {
+		return e.tl.GetBytes(r.Context(), rangeValue, serviceValue)
+	}
+	timelinesRequest(w, r, queryer)
 }
 
 func getTimeRange(r *http.Request) string {

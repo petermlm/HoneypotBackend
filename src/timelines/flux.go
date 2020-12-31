@@ -90,6 +90,22 @@ func makeBytesQuery(rangeValue, port string) (string, error) {
 	return makeQueryCommon(rangeValue, queryPart)
 }
 
+func makeBytesMySQLQuery(rangeValue string) (string, error) {
+	return makeBytesQuery(rangeValue, "3306")
+}
+
+func makeBytesPostgreSQLQuery(rangeValue string) (string, error) {
+	return makeBytesQuery(rangeValue, "5432")
+}
+
+func makeBytesNeo4j(rangeValue string) (string, error) {
+	return makeBytesQuery(rangeValue, "7474")
+}
+
 func makeBytesElasticsearchQuery(rangeValue string) (string, error) {
 	return makeBytesQuery(rangeValue, "9200")
+}
+
+func makeBytesMongoDBQuery(rangeValue string) (string, error) {
+	return makeBytesQuery(rangeValue, "27017")
 }
