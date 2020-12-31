@@ -83,6 +83,7 @@ func makeBytesQuery(rangeValue, port string) (string, error) {
 	queryTlp := `
 		|> filter(fn: (r) => r._measurement == "conn" and r.Port == "%s")
         |> pivot(rowKey: ["_time", "IP", "CountryCode", "Port"], columnKey: ["_field"], valueColumn: "_value")
+		|> group()
 		|> sort(columns: ["_time"], desc: true)
         |> limit(n: 100)`
 	queryPart := fmt.Sprintf(queryTlp, port)
