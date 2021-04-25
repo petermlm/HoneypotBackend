@@ -9,7 +9,7 @@ services:
         image: "golang:1.16"
         entrypoint: ["make", "listener"]
         ports:
-             "27017:27017"
+            - "27017:27017"
             - "3306:3306"
             - "5432:5432"
             - "7474:7474"
