@@ -1,31 +1,33 @@
+GO=go1.16
+
 listener:
-	go1.15 run cmd/listener/listener.go
+	$(GO) run cmd/listener/listener.go
 .PHONY: listener
 
 processor:
-	go1.15 run cmd/processor/processor.go
+	$(GO) run cmd/processor/processor.go
 .PHONY: processor
 
 storer:
-	go1.15 run cmd/storer/storer.go
+	$(GO) run cmd/storer/storer.go
 .PHONY: storer
 
 webserver:
-	go1.15 run cmd/webserver/webserver.go
+	$(GO) run cmd/webserver/webserver.go
 .PHONY: webserver
 
 cexp:
-	go1.15 run cmd/cexp/cexp.go
+	$(GO) run cmd/cexp/cexp.go
 .PHONY: cexp
 
 pexp:
-	go1.15 run cmd/pexp/pexp.go
+	$(GO) run cmd/pexp/pexp.go
 .PHONY: pexp
 
 test:
-	go1.15 test ./...
+	$(GO) test ./...
 .PHONY: test
 
 clean:
-	go1.15 clean -testcache
+	$(GO) clean -testcache
 .PHONY: clean

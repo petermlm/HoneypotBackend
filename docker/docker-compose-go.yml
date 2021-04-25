@@ -1,0 +1,22 @@
+version: '2.0'
+services:
+    webserver:
+        image: "golang:1.16"
+        entrypoint: ["make", "webserver"]
+        ports:
+            - "8200:8200"
+    listener:
+        image: "golang:1.16"
+        entrypoint: ["make", "listener"]
+        ports:
+             "27017:27017"
+            - "3306:3306"
+            - "5432:5432"
+            - "7474:7474"
+            - "9200:9200"
+    processor:
+        image: "golang:1.16"
+        entrypoint: ["make", "processor"]
+    storer:
+        image: "golang:1.16"
+        entrypoint: ["make", "storer"]
