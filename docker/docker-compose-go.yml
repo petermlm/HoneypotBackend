@@ -1,13 +1,17 @@
-version: '2.0'
+version: '3.0'
 services:
     webserver:
-        image: "golang:1.16"
-        entrypoint: ["make", "webserver"]
+        build:
+            context: ..
+            dockerfile: docker/go.docker
+        entrypoint: ["go", "run", "cmd/webserver/webserver.go"]
         ports:
-            - "8200:8200"
+            - "8080:8080"
     listener:
-        image: "golang:1.16"
-        entrypoint: ["make", "listener"]
+        build:
+            context: ..
+            dockerfile: docker/go.docker
+        entrypoint: ["go", "run", "cmd/listener/listener.go"]
         ports:
             - "27017:27017"
             - "3306:3306"
@@ -15,8 +19,12 @@ services:
             - "7474:7474"
             - "9200:9200"
     processor:
-        image: "golang:1.16"
-        entrypoint: ["make", "processor"]
+        build:
+            context: ..
+            dockerfile: docker/go.docker
+        entrypoint: ["go", "run", "cmd/processor/processor.go"]
     storer:
-        image: "golang:1.16"
-        entrypoint: ["make", "storer"]
+        build:
+            context: ..
+            dockerfile: docker/go.docker
+        entrypoint: ["go", "run", "cmd/storer/storer.go"]
