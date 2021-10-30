@@ -1,0 +1,99 @@
+version: '3.0'
+services:
+    # Services
+    listener:
+        container_name: honeypot_listener
+        build:
+            context: .
+            dockerfile: Dockerfile
+        entrypoint: ["go", "run", "cmd/listener/listener.go"]
+        volumes:
+            - ./src:/app
+        depends_on:
+            - rabbitmq
+            - influxdb
+        ports:
+            - "27017:27017"
+            - "3306:3306"
+            - "5432:5432"
+            - "7474:7474"
+            - "9200:9200"
+    processor:
+        container_name: honeypot_processor
+        build:
+            context: .
+            dockerfile: Dockerfile
+        entrypoint: ["go", "run", "cmd/processor/processor.go"]
+        volumes:
+            - ./src:/app
+        depends_on:
+            - rabbitmq
+            - influxdb
+    storer:
+        container_name: honeypot_storer
+        build:
+            context: .
+            dockerfile: Dockerfile
+        entrypoint: ["go", "run", "cmd/storer/storer.go"]
+        volumes:
+            - ./src:/app
+        depends_on:
+            - rabbitmq
+            - influxdb
+    webserver:
+        container_name: honeypot_webserver
+        build:
+            context: .
+            dockerfile: Dockerfile
+        entrypoint: ["go", "run", "cmd/webserver/webserver.go"]
+        volumes:
+            - ./src:/app
+        depends_on:
+            - rabbitmq
+            - influxdb
+        ports:
+            - "8080:8080"
+        depends_on:
+            - influxdb
+
+    # Influxdb and Chronograf
+    influxdb:
+        image: "influxdb:1.8-alpine"
+        container_name: honeypot_influxdb
+        environment:
+            - INFLUXDB_DB=honeypot
+            - INFLUXDB_ADMIN_USER=honey
+            - INFLUXDB_ADMIN_PASSWORD=honey
+            - INFLUXDB_HTTP_FLUX_ENABLED=true
+            - INFLUXDB_HTTP_LOG_ENABLED=false
+        ports:
+            - "8086:8086"
+    influxdb-cli:
+        image: "influxdb:1.8-alpine"
+        container_name: honeypot_influxdb_cli
+        depends_on:
+            - influxdb
+        entrypoint:
+            - influx
+            - -host
+            - influxdb
+        links:
+            - influxdb
+    chronograf:
+        image: "chronograf:1.8-alpine"
+        container_name: honeypot_chronograf
+        depends_on:
+            - influxdb
+        environment:
+            - INFLUXDB_URL=http://influxdb:8086
+            - INFLUXDB_HTTP_FLUX_ENABLED=true
+        ports:
+            - "8888:8888"
+
+    # Rabbitmq
+    rabbitmq:
+        image: "rabbitmq:3.8-alpine"
+        container_name: honeypot_rabbitmq
+        hostname: honeypot-rabbitmq
+        ports:
+            - "5672:5672"

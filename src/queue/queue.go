@@ -1,6 +1,10 @@
 package queue
 
 import (
+	"honeypot/settings"
+	"log"
+	"time"
+
 	"github.com/streadway/amqp"
 )
 
@@ -11,7 +15,18 @@ type queue struct {
 }
 
 func newQueue(name string) (*queue, error) {
-	conn, err := amqp.Dial(makeConnString())
+	var conn *amqp.Connection
+	var err error
+
+	log.Println("Connecting with RabbitMQ...")
+	for i := 0; i < settings.ConnectionRetriesTotal; i++ {
+		conn, err = amqp.Dial(makeConnString())
+		if err == nil {
+			break
+		}
+		log.Printf("...attemp %d\n", i)
+		time.Sleep(settings.ConnectionRetriesWait)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +53,7 @@ func newQueue(name string) (*queue, error) {
 		return nil, err
 	}
 
+	log.Println("Connection established")
 	ret := &queue{
 		conn: conn,
 		ch:   ch,

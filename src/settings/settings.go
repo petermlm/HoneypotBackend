@@ -1,5 +1,7 @@
 package settings
 
+import "time"
+
 // Ports to be listent to
 var Ports = [...]string{
 	"3306",  // MySQL
@@ -14,7 +16,7 @@ const (
 	WebserverAddr = ":8080"
 
 	// InfluxDB
-	InfluxDBAddr      = "localhost"
+	InfluxDBAddr      = "influxdb"
 	InfluxDBPort      = "8086"
 	InfluxDBUsername  = "honey"
 	InfluxDBPassword  = "honey"
@@ -24,10 +26,14 @@ const (
 	InfluxDBBucket    = "honeypot"
 
 	// Rabbitmq
-	RabbitmqHost                  = "localhost"
+	RabbitmqHost                  = "rabbitmq"
 	RabbitmqPort                  = "5672"
 	RabbitmqTaskProcessConnAttemp = "ProcessConnAttemp"
 	RabbitmqTaskStoreConnAttemp   = "StoreConnAttemp"
+
+	// Connection Retry
+	ConnectionRetriesWait  = time.Second * 2
+	ConnectionRetriesTotal = 10
 
 	// Page defaults
 	PageDefaultNum  = 0

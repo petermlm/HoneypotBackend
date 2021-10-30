@@ -1,8 +1,0 @@
-version: '3.0'
-services:
-    rabbitmq:
-        image: "rabbitmq:3.8-alpine"
-        container_name: honeypot_rabbitmq
-        hostname: honeypot-rabbitmq
-        ports:
-            - "5672:5672"

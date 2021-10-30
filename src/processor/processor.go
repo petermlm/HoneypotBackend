@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"honeypot/queue"
 	"honeypot/settings"
-	"honeypot/timelines"
 	"io/ioutil"
 	"net/http"
 )
 
-type env struct {
-	c  queue.Consumer
-	tl timelines.TimelinesWriter
+const baseGeoURL = "http://www.geoplugin.net/json.gp"
+
+func makeGeoURL(ip string) string {
+	return fmt.Sprintf("%s?ip=%s", baseGeoURL, ip)
 }
 
 func Start() error {
@@ -29,14 +29,9 @@ func Start() error {
 	}
 	defer p.Destroy()
 
-	// e := env{
-	// 	c:  c,
-	// 	tl: tl,
-	// }
-
 	ch, _ := c.Consume(context.Background())
 	for m := range ch {
-		resp, err := http.Get(fmt.Sprintf("http://www.geoplugin.net/json.gp?ip=%s", m.IP))
+		resp, err := http.Get(makeGeoURL(m.IP))
 		if err != nil {
 			continue
 		}
