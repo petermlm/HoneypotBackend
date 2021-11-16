@@ -2,7 +2,7 @@ version: '3.0'
 services:
     # Services
     listener:
-        container_name: honeypot_listener
+        container_name: honeypot-listener
         build:
             context: .
             dockerfile: Dockerfile
@@ -19,7 +19,7 @@ services:
             - "7474:7474"
             - "9200:9200"
     processor:
-        container_name: honeypot_processor
+        container_name: honeypot-processor
         build:
             context: .
             dockerfile: Dockerfile
@@ -30,7 +30,7 @@ services:
             - rabbitmq
             - influxdb
     storer:
-        container_name: honeypot_storer
+        container_name: honeypot-storer
         build:
             context: .
             dockerfile: Dockerfile
@@ -41,7 +41,7 @@ services:
             - rabbitmq
             - influxdb
     webserver:
-        container_name: honeypot_webserver
+        container_name: honeypot-webserver
         build:
             context: .
             dockerfile: Dockerfile
@@ -59,7 +59,7 @@ services:
     # Influxdb and Chronograf
     influxdb:
         image: "influxdb:1.8-alpine"
-        container_name: honeypot_influxdb
+        container_name: honeypot-influxdb
         environment:
             - INFLUXDB_DB=honeypot
             - INFLUXDB_ADMIN_USER=honey
@@ -70,7 +70,7 @@ services:
             - "8086:8086"
     influxdb-cli:
         image: "influxdb:1.8-alpine"
-        container_name: honeypot_influxdb_cli
+        container_name: honeypot-influxdb-cli
         depends_on:
             - influxdb
         entrypoint:
@@ -81,7 +81,7 @@ services:
             - influxdb
     chronograf:
         image: "chronograf:1.8-alpine"
-        container_name: honeypot_chronograf
+        container_name: honeypot-chronograf
         depends_on:
             - influxdb
         environment:
@@ -93,7 +93,7 @@ services:
     # Rabbitmq
     rabbitmq:
         image: "rabbitmq:3.8-alpine"
-        container_name: honeypot_rabbitmq
+        container_name: honeypot-rabbitmq
         hostname: honeypot-rabbitmq
         ports:
             - "5672:5672"

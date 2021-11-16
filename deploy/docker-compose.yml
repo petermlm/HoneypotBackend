@@ -2,7 +2,7 @@ version: '3.0'
 services:
     # Services
     listener:
-        container_name: honeypot_listener
+        container_name: honeypot-listener
         build:
             context: ..
             dockerfile: Dockerfile
@@ -17,7 +17,7 @@ services:
             - "7474:7474"
             - "9200:9200"
     processor:
-        container_name: honeypot_processor
+        container_name: honeypot-processor
         build:
             context: ..
             dockerfile: Dockerfile
@@ -26,7 +26,7 @@ services:
             - rabbitmq
             - influxdb
     storer:
-        container_name: honeypot_storer
+        container_name: honeypot-storer
         build:
             context: ..
             dockerfile: Dockerfile
@@ -35,7 +35,7 @@ services:
             - rabbitmq
             - influxdb
     webserver:
-        container_name: honeypot_webserver
+        container_name: honeypot-webserver
         build:
             context: ..
             dockerfile: Dockerfile
@@ -51,7 +51,7 @@ services:
     # Influxdb
     influxdb:
         image: "influxdb:1.8-alpine"
-        container_name: honeypot_influxdb
+        container_name: honeypot-influxdb
         environment:
             - INFLUXDB_DB=honeypot
             - INFLUXDB_ADMIN_USER=honey
@@ -64,7 +64,7 @@ services:
     # Rabbitmq
     rabbitmq:
         image: "rabbitmq:3.8-alpine"
-        container_name: honeypot_rabbitmq
+        container_name: honeypot-rabbitmq
         hostname: honeypot-rabbitmq
         ports:
             - "5672:5672"
