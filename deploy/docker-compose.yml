@@ -6,7 +6,7 @@ services:
         build:
             context: ..
             dockerfile: Dockerfile
-        entrypoint: ["go", "run", "cmd/listener/listener.go"]
+        entrypoint: ["/app/bin/listener"]
         depends_on:
             - rabbitmq
             - influxdb
@@ -21,7 +21,7 @@ services:
         build:
             context: ..
             dockerfile: Dockerfile
-        entrypoint: ["go", "run", "cmd/processor/processor.go"]
+        entrypoint: ["/app/bin/processor"]
         depends_on:
             - rabbitmq
             - influxdb
@@ -30,7 +30,7 @@ services:
         build:
             context: ..
             dockerfile: Dockerfile
-        entrypoint: ["go", "run", "cmd/storer/storer.go"]
+        entrypoint: ["/app/bin/storer"]
         depends_on:
             - rabbitmq
             - influxdb
@@ -39,7 +39,7 @@ services:
         build:
             context: ..
             dockerfile: Dockerfile
-        entrypoint: ["go", "run", "cmd/webserver/webserver.go"]
+        entrypoint: ["/app/bin/webserver"]
         depends_on:
             - rabbitmq
             - influxdb

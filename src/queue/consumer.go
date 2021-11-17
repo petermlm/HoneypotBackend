@@ -37,7 +37,7 @@ func (c *consumer) Consume(ctx context.Context) (chan *timelines.ConnAttemp, err
 	msgs, err := c.queue.ch.Consume(
 		c.Name(), // queue
 		"",       // consumer
-		false,    // auto-ack
+		true,     // auto-ack
 		false,    // exclusive
 		false,    // no-local
 		false,    // no-wait
