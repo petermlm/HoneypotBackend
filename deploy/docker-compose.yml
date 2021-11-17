@@ -44,7 +44,7 @@ services:
             - rabbitmq
             - influxdb
         ports:
-            - "8080:8080"
+            - "8100:8100"
         depends_on:
             - influxdb
 

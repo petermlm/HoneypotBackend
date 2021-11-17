@@ -13,7 +13,7 @@ var Ports = [...]string{
 
 const (
 	// Webserver
-	WebserverAddr = ":8080"
+	WebserverAddr = ":8100"
 
 	// InfluxDB
 	InfluxDBAddr      = "influxdb"
