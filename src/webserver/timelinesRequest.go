@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"honeypot/timelines"
 	"net/http"
 )
 
@@ -38,11 +37,18 @@ func getTopFlavours(w http.ResponseWriter, r *http.Request) {
 func getBytes(w http.ResponseWriter, r *http.Request) {
 	serviceValue, err := getKeyFromURL(r, "service")
 	if err != nil {
-		http.Error(w, "Invalid service", http.StatusBadRequest)
+		yieldInvalidService(w)
 		return
 	}
+
+	ip, err := getIPFromServiceName(serviceValue)
+	if err != nil {
+		yieldInvalidService(w)
+		return
+	}
+
 	queryer := func(e *env, rangeValue string) (interface{}, error) {
-		return e.tl.GetBytes(r.Context(), rangeValue, serviceValue)
+		return e.tl.GetBytes(r.Context(), rangeValue, ip)
 	}
 	timelinesRequest(w, r, queryer)
 }
@@ -50,7 +56,8 @@ func getBytes(w http.ResponseWriter, r *http.Request) {
 func getTimeRange(r *http.Request) string {
 	rangeValue, err := getQueryParamRange(r)
 	if err != nil || rangeValue == "" {
-		return timelines.DefaultValidRanges
+		// TODO: Handle this better
+		return "mo"
 	}
 	return rangeValue
 }
@@ -73,4 +80,8 @@ func timelinesRequest(
 		return
 	}
 	responde(w, r, ret)
+}
+
+func yieldInvalidService(w http.ResponseWriter) {
+	http.Error(w, "Invalid service", http.StatusBadRequest)
 }

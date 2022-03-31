@@ -14,7 +14,8 @@ func Start() error {
 	}
 	defer c.Destroy()
 
-	tl := timelines.NewTimelinesWriter()
+	tl := timelines.InitTimelines()
+	defer tl.Close()
 
 	ch, _ := c.Consume(context.Background())
 	for m := range ch {

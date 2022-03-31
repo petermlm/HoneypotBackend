@@ -23,20 +23,13 @@ func Start(ctx context.Context, ports []string) error {
 		return err
 	}
 
-	tl := timelines.NewTimelinesWriter()
-	errorsCh := tl.Errors()
-
 	for i, port := range ports {
 		waitChans[i] = make(chan bool, 1)
 		cancelChans[i] = make(chan bool, 1)
-		go listen(ctx, waitChans[i], cancelChans[i], tl, publisher, port)
+		go listen(ctx, waitChans[i], cancelChans[i], publisher, port)
 	}
 
-	select {
-	case e := <-errorsCh:
-		err = e
-	case <-ctx.Done():
-	}
+	<-ctx.Done()
 
 	for _, ch := range cancelChans {
 		ch <- true
@@ -47,7 +40,7 @@ func Start(ctx context.Context, ports []string) error {
 	return err
 }
 
-func listen(ctx context.Context, wait chan bool, cancel chan bool, tl timelines.TimelinesWriter, publisher queue.Publisher, port string) {
+func listen(ctx context.Context, wait chan bool, cancel chan bool, publisher queue.Publisher, port string) {
 	defer func() { wait <- true }()
 
 	listener, err := createListener(port)

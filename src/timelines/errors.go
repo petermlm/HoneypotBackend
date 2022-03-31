@@ -2,15 +2,15 @@ package timelines
 
 import "fmt"
 
-type InvalidIP7 struct {
+type InvalidIP struct {
 	IP string
 }
 
-func newInvalidIP7(ip string) error {
-	return &InvalidIP7{ip}
+func newInvalidIP(ip string) error {
+	return &InvalidIP{ip}
 }
 
-func (e *InvalidIP7) Error() string {
+func (e *InvalidIP) Error() string {
 	return fmt.Sprintf("Invalid IP: %s", e.IP)
 }
 

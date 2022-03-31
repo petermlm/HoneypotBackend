@@ -15,18 +15,15 @@ const (
 	// Webserver
 	WebserverAddr = ":8100"
 
-	// InfluxDB
-	InfluxDBAddr      = "influxdb"
-	InfluxDBPort      = "8086"
-	InfluxDBUsername  = "honey"
-	InfluxDBPassword  = "honey"
-	InfluxDBName      = "honey"
-	InfluxDBPrecision = "ns"
-	InfluxDBOrg       = "honeypot"
-	InfluxDBBucket    = "honeypot"
+	// Postgres
+	DatabaseConnRetries = 5
+	DatabaseAddr        = "localhost:8400"
+	DatabaseDatabase    = "honeypot_db"
+	DatabaseUser        = "honeypot_user"
+	DatabasePassword    = "honeypot_pass"
 
 	// Rabbitmq
-	RabbitmqHost                  = "rabbitmq"
+	RabbitmqHost                  = "localhost"
 	RabbitmqPort                  = "5672"
 	RabbitmqTaskProcessConnAttemp = "ProcessConnAttemp"
 	RabbitmqTaskStoreConnAttemp   = "StoreConnAttemp"

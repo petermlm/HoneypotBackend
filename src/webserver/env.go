@@ -3,12 +3,12 @@ package webserver
 import "honeypot/timelines"
 
 type env struct {
-	tl timelines.TimelinesQuery
+	tl timelines.Timelines
 }
 
 func newEnv() *env {
 	return &env{
-		tl: timelines.NewTimelinesQuery(),
+		tl: timelines.InitTimelines(),
 	}
 }
 

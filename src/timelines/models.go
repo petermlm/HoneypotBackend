@@ -15,32 +15,21 @@ func init() {
 	reIPv4 = regexp.MustCompile(ipv4Str)
 }
 
-type SingleCount struct {
-	Count int
+type DBObject struct {
+	ID        uint
+	CreatedAt time.Time `sql:"default:now()"`
+	UpdatedAt time.Time `sql:"default:now()"`
 }
 
 type ConnAttemp struct {
-	Time        time.Time
-	Port        string
-	IP          string
-	CountryCode string
-	ClientPort  string
-	Bytes       []byte
-}
+	DBObject
 
-type MapDataEntry struct {
-	CountryCode string
-	Count       int64
-}
-
-type PortCount struct {
-	Port  string
-	Count int64
-}
-
-type BytesList struct {
-	Time  time.Time
-	Bytes string
+	Time        time.Time `sql:",notnull"`
+	Port        string    `sql:",notnull"`
+	IP          string    `sql:",notnull"`
+	CountryCode string    `sql:",notnull"`
+	ClientPort  string    `sql:",notnull"`
+	Bytes       []byte    `sql:",notnull"`
 }
 
 func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
@@ -52,7 +41,7 @@ func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
 	clientPort := ipAndPort[1]
 
 	if !reIPv4.Match([]byte(ip)) {
-		return nil, newInvalidIP7(ip)
+		return nil, newInvalidIP(ip)
 	}
 
 	connAttem := &ConnAttemp{
@@ -66,28 +55,18 @@ func NewConnAttemp(tm time.Time, port, addr string) (*ConnAttemp, error) {
 	return connAttem, nil
 }
 
-type dbPoint struct {
-	Timestamp time.Time
-	Tags      map[string]string
-	Fields    map[string]interface{}
+func separateIPAndPort(addr string) ([]string, error) {
+	strs := strings.Split(addr, ":")
+	if len(strs) != 2 {
+		return nil, newCantSeparateAddrError(addr)
+	}
+	return strs, nil
 }
 
-func (c *ConnAttemp) toDbPoint() *dbPoint {
-	rep := new(dbPoint)
-
-	rep.Timestamp = c.Time
-
-	rep.Tags = make(map[string]string)
-	rep.Tags["Port"] = c.Port
-	rep.Tags["IP"] = c.IP
-	rep.Tags["CountryCode"] = c.CountryCode
-
-	rep.Fields = make(map[string]interface{})
-	rep.Fields["ClientPort"] = c.ClientPort
-	rep.Fields["Bytes"] = c.Bytes
-
-	return rep
-}
+/* ============================================================================
+ * Move to query models
+ * ============================================================================
+ */
 
 func (c *ConnAttemp) ToJSON() ([]byte, error) {
 	b, err := json.Marshal(c)
@@ -104,12 +83,4 @@ func ConnAttempFromJson(b []byte) (*ConnAttemp, error) {
 		return nil, newCantUnarshalConnAttemp(err)
 	}
 	return connAttemp, nil
-}
-
-func separateIPAndPort(addr string) ([]string, error) {
-	strs := strings.Split(addr, ":")
-	if len(strs) != 2 {
-		return nil, newCantSeparateAddrError(addr)
-	}
-	return strs, nil
 }

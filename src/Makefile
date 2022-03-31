@@ -24,6 +24,10 @@ webserver:
 # Other Go Services
 # =============================================================================
 
+migrate:
+	$(GO) run cmd/migrate/migrate.go
+.PHONY: migrate
+
 cexp:
 	$(GO) run cmd/cexp/cexp.go
 .PHONY: cexp

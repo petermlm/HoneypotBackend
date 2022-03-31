@@ -3,263 +3,179 @@ package timelines
 import (
 	"context"
 	"fmt"
-	"honeypot/settings"
-	"log"
-	"strings"
+	"time"
 
-	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/go-pg/pg/orm"
 )
 
-type TimelinesQuery interface {
-	Close()
-	GetTotalConsumptions(context.Context, string) (*SingleCount, error)
-	GetMapData(context.Context, string) ([]*MapDataEntry, error)
-	GetConnAttemps(context.Context, string) ([]*ConnAttemp, error)
-	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)
-	GetTopFlavours(context.Context, string) ([]*PortCount, error)
-	GetBytes(context.Context, string, string) ([]*BytesList, error)
+type ConnAttempSimple struct {
+	tableName   struct{} `pg:",discard_unknown_columns"`
+	ID          uint
+	Time        time.Time
+	Port        string
+	IP          string
+	CountryCode string
+	ClientPort  string
 }
 
-type timelinesQuery struct {
-	*timelines
-	queryAPI api.QueryAPI
+type MapDataEntry struct {
+	CountryCode string
+	Count       int
 }
 
-func NewTimelinesQuery() TimelinesQuery {
-	log.Println("Timelines starting")
+type PortCount struct {
+	Port  string
+	Count int64
+}
 
-	tl := newTimelines()
-	queryAPI := tl.dbClient.QueryAPI(settings.InfluxDBOrg)
+type BytesList struct {
+	tableName struct{} `pg:",discard_unknown_columns"`
+	Time      time.Time
+	Bytes     string
+}
 
-	return &timelinesQuery{
-		timelines: tl,
-		queryAPI:  queryAPI,
+func (t *timelines) InsertConnAttemp(connAttemp *ConnAttemp) error {
+	err := t.db.Insert(connAttemp)
+
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
-func (t *timelinesQuery) Close() {
-	t.timelines.close()
-	log.Println("Timelines closed")
+func (t *timelines) GetTotalConsumptions(ctx context.Context, rangeValue string) (int, error) {
+	var err error
+	query := t.db.Model(&ConnAttemp{})
+
+	query, err = addRange(query, "conn_attemp.time", rangeValue)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := query.Count()
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
-func (t *timelinesQuery) getCommon(
-	ctx context.Context,
-	rangeValue string,
-	fluxQuery func(string) (string, error),
-) (*api.QueryTableResult, error) {
-	query, err := fluxQuery(rangeValue)
+func (t *timelines) GetMapData(ctx context.Context, rangeValue string) ([]*MapDataEntry, error) {
+	var res []*MapDataEntry
+
+	query, err := t.makeCountQuery("country_code", rangeValue)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := t.queryAPI.Query(ctx, query)
+	if err := query.Select(&res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (t *timelines) GetConnAttemps(ctx context.Context, rangeValue string) ([]*ConnAttempSimple, error) {
+	var err error
+	var res []*ConnAttempSimple
+
+	query := t.db.Model((*ConnAttemp)(nil))
+
+	query, err = addRange(query, "conn_attemp.time", rangeValue)
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
-}
-
-func (t *timelinesQuery) GetTotalConsumptions(ctx context.Context, rangeValue string) (*SingleCount, error) {
-	result, err := t.getCommon(ctx, rangeValue, makeTotalConsumptions)
+	err = query.Select(&res)
 	if err != nil {
 		return nil, err
 	}
 
-	if !result.Next() {
-		return nil, fmt.Errorf("No results")
-	}
-
-	count, ok := result.Record().ValueByKey("Count").(int64)
-	if !ok {
-		return nil, fmt.Errorf("No results")
-	}
-	return &SingleCount{int(count)}, nil
+	return res, nil
 }
 
-func (t *timelinesQuery) GetMapData(ctx context.Context, rangeValue string) ([]*MapDataEntry, error) {
-	result, err := t.getCommon(ctx, rangeValue, makeMapDataQuery)
+func (t *timelines) GetTopConsumers(ctx context.Context, rangeValue string) ([]*MapDataEntry, error) {
+	var res []*MapDataEntry
+
+	query, err := t.makeCountQuery("country_code", rangeValue)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make([]*MapDataEntry, 0)
-	for result.Next() {
-		record := result.Record()
-
-		countryCode, ok := record.ValueByKey("CountryCode").(string)
-		if !ok {
-			countryCode = ""
-		}
-		count, ok := record.Value().(int64)
-		if !ok {
-			log.Println(record.Value())
-			count = 0
-		}
-
-		mapDataEntry := &MapDataEntry{
-			CountryCode: countryCode,
-			Count:       count,
-		}
-		ret = append(ret, mapDataEntry)
-	}
-	if result.Err() != nil {
-		return nil, result.Err()
+	if err := query.Select(&res); err != nil {
+		return nil, err
 	}
 
-	return ret, nil
+	return res, nil
 }
 
-func (t *timelinesQuery) GetConnAttemps(ctx context.Context, rangeValue string) ([]*ConnAttemp, error) {
-	result, err := t.getCommon(ctx, rangeValue, makeConnAttempsQuery)
+func (t *timelines) GetTopFlavours(ctx context.Context, rangeValue string) ([]*PortCount, error) {
+	var res []*PortCount
+
+	query, err := t.makeCountQuery("port", rangeValue)
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make([]*ConnAttemp, 0)
-	for result.Next() {
-		record := result.Record()
-
-		port, ok := record.ValueByKey("Port").(string)
-		if !ok {
-			return nil, fmt.Errorf("Port is not a string")
-		}
-		ip, ok := record.ValueByKey("IP").(string)
-		if !ok {
-			return nil, fmt.Errorf("IP is not a string")
-		}
-		clientPort, ok := record.ValueByKey("ClientPort").(string)
-		if !ok {
-			clientPort = ""
-		}
-		countryCode, ok := record.ValueByKey("CountryCode").(string)
-		if !ok {
-			countryCode = ""
-		}
-
-		connAttemp := &ConnAttemp{
-			Time:        record.Time(),
-			Port:        port,
-			IP:          ip,
-			ClientPort:  clientPort,
-			CountryCode: countryCode,
-		}
-		ret = append(ret, connAttemp)
-	}
-	if result.Err() != nil {
-		return nil, result.Err()
+	if err := query.Select(&res); err != nil {
+		return nil, err
 	}
 
-	return ret, nil
+	return res, nil
 }
 
-func (t *timelinesQuery) GetTopConsumers(ctx context.Context, rangeValue string) ([]*MapDataEntry, error) {
-	result, err := t.getCommon(ctx, rangeValue, makeTopConsumersQuery)
+func (t *timelines) GetBytes(ctx context.Context, rangeValue, port string) ([]*BytesList, error) {
+	var res []*BytesList
+
+	err := t.db.Model((*ConnAttemp)(nil)).
+		Where("conn_attemp.port = ?", port).
+		Select(&res)
+
 	if err != nil {
 		return nil, err
 	}
 
-	ret := make([]*MapDataEntry, 0)
-	for result.Next() {
-		record := result.Record()
-
-		countryCode, ok := record.ValueByKey("CountryCode").(string)
-		if !ok {
-			countryCode = ""
-		}
-		count, ok := record.Value().(int64)
-		if !ok {
-			log.Println(record.Value())
-			count = 0
-		}
-
-		portCount := &MapDataEntry{
-			CountryCode: countryCode,
-			Count:       count,
-		}
-		ret = append(ret, portCount)
-	}
-	if result.Err() != nil {
-		return nil, result.Err()
-	}
-
-	return ret, nil
+	return res, nil
 }
 
-func (t *timelinesQuery) GetTopFlavours(ctx context.Context, rangeValue string) ([]*PortCount, error) {
-	result, err := t.getCommon(ctx, rangeValue, makeTopFlavoursQuery)
+func (t *timelines) makeCountQuery(col, rangeValue string) (*orm.Query, error) {
+	query := t.db.Model((*ConnAttemp)(nil)).
+		Column(col).
+		ColumnExpr("count(*) AS count").
+		Group(col).
+		Order(col)
+
+	return addRange(query, "conn_attemp.time", rangeValue)
+}
+
+func addRange(query *orm.Query, col, rangeValue string) (*orm.Query, error) {
+	rangeTime, err := rangeValueToTime(rangeValue)
 	if err != nil {
 		return nil, err
 	}
-
-	ret := make([]*PortCount, 0)
-	for result.Next() {
-		record := result.Record()
-
-		port, ok := record.ValueByKey("Port").(string)
-		if !ok {
-			port = ""
-		}
-		count, ok := record.Value().(int64)
-		if !ok {
-			log.Println(record.Value())
-			count = 0
-		}
-
-		portCount := &PortCount{
-			Port:  port,
-			Count: count,
-		}
-		ret = append(ret, portCount)
-	}
-	if result.Err() != nil {
-		return nil, result.Err()
-	}
-
-	return ret, nil
+	return query.Where(col+" >= ?", rangeTime), nil
 }
 
-func (t *timelinesQuery) GetBytes(ctx context.Context, rangeValue string, serviceValue string) ([]*BytesList, error) {
-	var fluxQuery func(string) (string, error)
-	switch serviceValue {
-	case "mysql":
-		fluxQuery = makeBytesMySQLQuery
-	case "postgresql":
-		fluxQuery = makeBytesPostgreSQLQuery
-	case "neo4j":
-		fluxQuery = makeBytesNeo4j
-	case "elasticsearch":
-		fluxQuery = makeBytesElasticsearchQuery
-	case "mongodb":
-		fluxQuery = makeBytesMongoDBQuery
+func rangeValueToTime(rangeValue string) (time.Time, error) {
+	now := time.Now()
+	var diff time.Duration
+
+	switch rangeValue {
+	case "y":
+		// Approximation only
+		diff = time.Hour * 24 * 365
+	case "mo":
+		// Approximation only
+		diff = time.Hour * 24 * 31
+	case "w":
+		diff = time.Hour * 24 * 7
+	case "d":
+		diff = time.Hour * 24
+	case "h":
+		diff = time.Hour
 	default:
+		return time.Time{}, fmt.Errorf("Invalid rangeValue")
 	}
 
-	result, err := t.getCommon(ctx, rangeValue, fluxQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	ret := make([]*BytesList, 0)
-	for result.Next() {
-		record := result.Record()
-
-		bytes, ok := record.ValueByKey("Bytes").(string)
-		if !ok {
-			bytes = ""
-		}
-		bytes = strings.ReplaceAll(bytes, "\u0000", "")
-		bytes = strings.TrimSpace(bytes)
-
-		byteList := &BytesList{
-			Time:  record.Time(),
-			Bytes: bytes,
-		}
-		ret = append(ret, byteList)
-	}
-	if result.Err() != nil {
-		return nil, result.Err()
-	}
-
-	return ret, nil
+	return now.Add(diff * -1), nil
 }
