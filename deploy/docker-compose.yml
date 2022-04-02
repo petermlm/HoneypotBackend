@@ -48,18 +48,16 @@ services:
         depends_on:
             - influxdb
 
-    # Influxdb
-    influxdb:
-        image: "influxdb:1.8-alpine"
-        container_name: honeypot-influxdb
+    # Postgres and Rabbitmq
+    postgres:
+        container_name: honeypot-postgres
+        image: postgres:9.6
         environment:
-            - INFLUXDB_DB=honeypot
-            - INFLUXDB_ADMIN_USER=honey
-            - INFLUXDB_ADMIN_PASSWORD=honey
-            - INFLUXDB_HTTP_FLUX_ENABLED=true
-            - INFLUXDB_HTTP_LOG_ENABLED=false
+          - POSTGRES_DB=honeypot_db
+          - POSTGRES_USER=honeypot_user
+          - POSTGRES_PASSWORD=honeypot_pass
         ports:
-            - "8086:8086"
+          - "8400:5432"
 
     # Rabbitmq
     rabbitmq:
