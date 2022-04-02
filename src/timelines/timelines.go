@@ -18,13 +18,13 @@ type Timelines interface {
 	MigrationsTableExsits() bool
 
 	// Queries
-	InsertConnAttemp(*ConnAttemp) error                                  // Reimplement
-	GetTotalConsumptions(context.Context, string) (int, error)           // Reimplement
-	GetMapData(context.Context, string) ([]*MapDataEntry, error)         // Reimplement
-	GetConnAttemps(context.Context, string) ([]*ConnAttempSimple, error) // Reimplement
-	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)    // Reimplement
-	GetTopFlavours(context.Context, string) ([]*PortCount, error)        // Reimplement
-	GetBytes(context.Context, string, string) ([]*BytesList, error)      // Reimplement
+	InsertConnAttemp(*ConnAttemp) error
+	GetTotalConsumptions(context.Context, string) (*CountResult, error)
+	GetMapData(context.Context, string) ([]*MapDataEntry, error)
+	GetConnAttemps(context.Context, string) ([]*ConnAttempSimple, error)
+	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)
+	GetTopFlavours(context.Context, string) ([]*PortCount, error)
+	GetBytes(context.Context, string, string) ([]*BytesList, error)
 }
 
 type timelines struct {

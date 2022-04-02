@@ -18,6 +18,10 @@ type ConnAttempSimple struct {
 	ClientPort  string
 }
 
+type CountResult struct {
+	Count int
+}
+
 type MapDataEntry struct {
 	CountryCode string
 	Count       int
@@ -43,21 +47,21 @@ func (t *timelines) InsertConnAttemp(connAttemp *ConnAttemp) error {
 	return nil
 }
 
-func (t *timelines) GetTotalConsumptions(ctx context.Context, rangeValue string) (int, error) {
+func (t *timelines) GetTotalConsumptions(ctx context.Context, rangeValue string) (*CountResult, error) {
 	var err error
 	query := t.db.Model(&ConnAttemp{})
 
 	query, err = addRange(query, "conn_attemp.time", rangeValue)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	count, err := query.Count()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return count, nil
+	return &CountResult{Count: count}, nil
 }
 
 func (t *timelines) GetMapData(ctx context.Context, rangeValue string) ([]*MapDataEntry, error) {
