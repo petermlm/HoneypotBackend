@@ -56,13 +56,9 @@ services:
           - POSTGRES_DB=honeypot_db
           - POSTGRES_USER=honeypot_user
           - POSTGRES_PASSWORD=honeypot_pass
-        ports:
-          - "8400:5432"
 
     # Rabbitmq
     rabbitmq:
         image: "rabbitmq:3.8-alpine"
         container_name: honeypot-rabbitmq
         hostname: honeypot-rabbitmq
-        ports:
-            - "5672:5672"
