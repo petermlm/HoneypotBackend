@@ -9,7 +9,7 @@ services:
         entrypoint: ["/app/bin/listener"]
         depends_on:
             - rabbitmq
-            - influxdb
+            - postgres
         ports:
             - "27017:27017"
             - "3306:3306"
@@ -24,7 +24,7 @@ services:
         entrypoint: ["/app/bin/processor"]
         depends_on:
             - rabbitmq
-            - influxdb
+            - postgres
     storer:
         container_name: honeypot-storer
         build:
@@ -33,7 +33,7 @@ services:
         entrypoint: ["/app/bin/storer"]
         depends_on:
             - rabbitmq
-            - influxdb
+            - postgres
     webserver:
         container_name: honeypot-webserver
         build:
@@ -42,11 +42,11 @@ services:
         entrypoint: ["/app/bin/webserver"]
         depends_on:
             - rabbitmq
-            - influxdb
+            - postgres
         ports:
             - "8100:8100"
         depends_on:
-            - influxdb
+            - postgres
 
     # Postgres and Rabbitmq
     postgres:
