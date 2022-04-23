@@ -1,8 +1,8 @@
 # HoneypotBackend
 
 This is the Go backend of an implementation of a honeypot. This honeypot will
-open a few tcp ports, listen on them, and register any connection attempt to an
-InfluxDB timeline.
+open a few tcp ports, listen on them, and register any connection attempt to a
+timeline. The timeline is kept in a Postgres database.
 
 The Honeypot is implemented using a microservices architecture. The services
 communicate via RabbitMQ.
