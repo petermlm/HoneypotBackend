@@ -17,13 +17,13 @@ const (
 
 	// Postgres
 	DatabaseConnRetries = 5
-	DatabaseAddr        = "localhost:8400"
+	DatabaseAddr        = "honeypot-postgres:5432"
 	DatabaseDatabase    = "honeypot_db"
 	DatabaseUser        = "honeypot_user"
 	DatabasePassword    = "honeypot_pass"
 
 	// Rabbitmq
-	RabbitmqHost                  = "localhost"
+	RabbitmqHost                  = "honeypot-rabbitmq"
 	RabbitmqPort                  = "5672"
 	RabbitmqTaskProcessConnAttemp = "ProcessConnAttemp"
 	RabbitmqTaskStoreConnAttemp   = "StoreConnAttemp"
