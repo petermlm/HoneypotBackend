@@ -90,6 +90,8 @@ func (t *timelines) GetConnAttemps(ctx context.Context, rangeValue string) ([]*C
 		return nil, err
 	}
 
+	query = query.Order("conn_attemp.time DESC")
+
 	err = query.Select(&res)
 	if err != nil {
 		return nil, err
