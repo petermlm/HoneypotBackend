@@ -47,6 +47,13 @@ directly without a docker container. For this, RabbitMQ and Influx can still be
 started using docker-compose. The host for InfluxDB and RabbitMQ should be
 changed to "localhost" in the config.
 
+## Migrations
+
+Upon starting a fresh database, migrations need to be executed. In development,
+this can be done with:
+
+    ./scripts/migrate.sh
+
 # Tests
 
 In `src`, run `make test`. This will execute every unit test.

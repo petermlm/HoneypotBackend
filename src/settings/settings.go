@@ -29,7 +29,7 @@ const (
 	RabbitmqTaskStoreConnAttemp   = "StoreConnAttemp"
 
 	// Connection Retry
-	ConnectionRetriesWait  = time.Second * 2
+	ConnectionRetriesWait  = time.Second * 5
 	ConnectionRetriesTotal = 10
 
 	// Page defaults
