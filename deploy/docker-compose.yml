@@ -58,10 +58,14 @@ services:
           - POSTGRES_PASSWORD=honeypot_pass
           - PGDATA=/data
         volumes:
-          - "./data:/data"
+          - pgdata:/data
 
     # Rabbitmq
     rabbitmq:
         image: "rabbitmq:3.8-alpine"
         container_name: honeypot-rabbitmq
         hostname: honeypot-rabbitmq
+
+
+volumes:
+  pgdata:
