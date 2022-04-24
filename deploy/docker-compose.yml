@@ -56,6 +56,9 @@ services:
           - POSTGRES_DB=honeypot_db
           - POSTGRES_USER=honeypot_user
           - POSTGRES_PASSWORD=honeypot_pass
+          - PGDATA=/data
+        volumes:
+          - "./data:/data"
 
     # Rabbitmq
     rabbitmq:
