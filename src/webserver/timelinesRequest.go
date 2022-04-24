@@ -74,7 +74,7 @@ func timelinesRequest(
 	queryer func(*env, string) (interface{}, error),
 ) {
 	ret := timelinesRequestCommon(w, r, queryer)
-	if ret != nil {
+	if ret == nil {
 		return
 	}
 	responde(w, r, ret)
