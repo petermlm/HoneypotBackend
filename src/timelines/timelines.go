@@ -25,6 +25,7 @@ type Timelines interface {
 	GetTopConsumers(context.Context, string) ([]*MapDataEntry, error)
 	GetTopFlavours(context.Context, string) ([]*PortCount, error)
 	GetBytes(context.Context, string, string) ([]*BytesList, error)
+	ExportData(context.Context) (string, error)
 }
 
 type timelines struct {

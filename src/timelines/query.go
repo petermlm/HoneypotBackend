@@ -1,6 +1,7 @@
 package timelines
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -142,6 +143,13 @@ func (t *timelines) GetBytes(ctx context.Context, rangeValue, port string) ([]*B
 	}
 
 	return res, nil
+}
+
+func (t *timelines) ExportData(ctx context.Context) (string, error) {
+	query := "COPY conn_attemps TO STDOUT (FORMAT csv, DELIMITER ',', HEADER true);"
+	buffer := new(bytes.Buffer)
+	t.db.Conn().CopyTo(buffer, query)
+	return buffer.String(), nil
 }
 
 func (t *timelines) makeCountQuery(col, rangeValue string) (*orm.Query, error) {

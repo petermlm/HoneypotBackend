@@ -53,6 +53,12 @@ func getBytes(w http.ResponseWriter, r *http.Request) {
 	timelinesRequest(w, r, queryer)
 }
 
+func exportData(w http.ResponseWriter, r *http.Request) {
+	timelinesRequestCSV(w, r, "conn_attemps.csv", func(e *env, rangeValue string) (interface{}, error) {
+		return e.tl.ExportData(r.Context())
+	})
+}
+
 func getTimeRange(r *http.Request) string {
 	rangeValue, err := getQueryParamRange(r)
 	if err != nil || rangeValue == "" {
@@ -67,19 +73,45 @@ func timelinesRequest(
 	r *http.Request,
 	queryer func(*env, string) (interface{}, error),
 ) {
+	ret := timelinesRequestCommon(w, r, queryer)
+	if ret != nil {
+		return
+	}
+	responde(w, r, ret)
+}
+
+func timelinesRequestCSV(
+	w http.ResponseWriter,
+	r *http.Request,
+	csvFilename string,
+	queryer func(*env, string) (interface{}, error),
+) {
+	ret := timelinesRequestCommon(w, r, queryer)
+	if ret == nil {
+		return
+	}
+	respondeCSV(w, r, csvFilename, ret.(string))
+}
+
+func timelinesRequestCommon(
+	w http.ResponseWriter,
+	r *http.Request,
+	queryer func(*env, string) (interface{}, error),
+) interface{} {
 	e, ok := r.Context().Value("env").(*env)
 	if !ok {
 		http.Error(w, "Internal Error", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	rangeValue := getTimeRange(r)
 	ret, err := queryer(e, rangeValue)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil
 	}
-	responde(w, r, ret)
+
+	return ret
 }
 
 func yieldInvalidService(w http.ResponseWriter) {
