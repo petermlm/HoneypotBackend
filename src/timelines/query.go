@@ -135,6 +135,7 @@ func (t *timelines) GetBytes(ctx context.Context, rangeValue, port string) ([]*B
 	var res []*BytesList
 
 	err := t.db.Model((*ConnAttemp)(nil)).
+		ColumnExpr("encode(btrim(conn_attemp.bytes, '\\000'::bytea), 'escape') as bytes").
 		Where("conn_attemp.port = ?", port).
 		Select(&res)
 
