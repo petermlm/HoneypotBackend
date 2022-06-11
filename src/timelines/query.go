@@ -159,7 +159,7 @@ func (t *timelines) makeCountQuery(col, rangeValue string) (*orm.Query, error) {
 		Column(col).
 		ColumnExpr("count(*) AS count").
 		Group(col).
-		Order(col)
+		Order("count DESC")
 
 	return addRange(query, "conn_attemp.time", rangeValue)
 }
